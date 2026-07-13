@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Tracking ETQ</title>
+    
+    <!-- Tailwind CSS para Estilização Responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para Gráficos Dinâmicos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS para ler Excel (.xlsx) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- FontAwesome para Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .drag-active {
+            border-color: #FFCC00 !important;
+            background-color: #fffbeb !important;
+        }
+        /* Barra de rolagem personalizada para a tabela e painéis */
+        .table-container::-webkit-scrollbar, .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .table-container::-webkit-scrollbar-track, .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb, .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover, .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* Regra Inteligente: Todos os ícones do sistema ganham o tom D40511, exceto os ícones semânticos de Status */
+        i:not(.fa-circle-exclamation):not(.fa-bell):not(.fa-triangle-exclamation):not(.fa-circle-check):not(.fa-circle-question) {
+            color: #D40511 !important;
+        }
+    </style>
+</head>
+<body class="text-gray-800 relative min-h-screen">
+
+    <!-- Barra de Navegação -->
+    <nav class="bg-slate-900 border-b-4 border-[#FFCC00] text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-chart-pie text-2xl"></i>
+                    <span class="font-bold text-xl tracking-tight">/ETQTracker <span class="text-[#FFCC00]">Analytics</span></span>
+                </div>
+                <div>
+                    <span class="text-sm text-amber-200 font-medium">Prevenção de Vencimentos & Gestão Multi-Base</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Seletor de Base de Dados Ativa (Abas) -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest px-1 mb-3">
+                <i class="fa-solid fa-database mr-1"></i> Selecionar Base de Dados Ativa
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <!-- Tab CAPA -->
+                <button id="tab-capa" onclick="switchTab('capa')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0 group-hover:scale-105 transition-transform">
+                            <i class="fa-solid fa-folder-open"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-sm text-slate-700 block">CAPAs</span>
+                            <span id="fileName-capa" class="text-xs text-slate-400 block truncate max-w-[140px]" title="Sem ficheiro">Sem ficheiro</span>
+                        </div>
+                    </div>
+                    <span id="badge-capa" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                </button>
+
+                <!-- Tab Ações de CAPA -->
+                <button id="tab-acoesCapa" onclick="switchTab('acoesCapa')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0 group-hover:scale-105 transition-transform">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-sm text-slate-700 block">Ações de CAPA</span>
+                            <span id="fileName-acoesCapa" class="text-xs text-slate-400 block truncate max-w-[140px]" title="Sem ficheiro">Sem ficheiro</span>
+                        </div>
+                    </div>
+                    <span id="badge-acoesCapa" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                </button>
+
+                <!-- Tab GMUDs -->
+                <button id="tab-gmuds" onclick="switchTab('gmuds')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0 group-hover:scale-105 transition-transform">
+                            <i class="fa-solid fa-code-branch"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-sm text-slate-700 block">GMUDs</span>
+                            <span id="fileName-gmuds" class="text-xs text-slate-400 block truncate max-w-[140px]" title="Sem ficheiro">Sem ficheiro</span>
+                        </div>
+                    </div>
+                    <span id="badge-gmuds" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                </button>
+
+                <!-- Tab Ações de GMUD -->
+                <button id="tab-acoesGmud" onclick="switchTab('acoesGmud')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0 group-hover:scale-105 transition-transform">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                        </div>
+                        <div>
+                            <span class="font-bold text-sm text-slate-700 block">Ações de GMUD</span>
+                            <span id="fileName-acoesGmud" class="text-xs text-slate-400 block truncate max-w-[140px]" title="Sem ficheiro">Sem ficheiro</span>
+                        </div>
+                    </div>
+                    <span id="badge-acoesGmud" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Área de Exibição Principal -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Secção de Carregamento/Upload (Dinâmica consoante a aba selecionada) -->
+        <div id="uploadSection" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 mb-8 transition-all duration-300">
+            <div class="text-center">
+                <h2 id="uploadTitle" class="text-2xl font-bold text-slate-700 mb-2">Importar Folha de Cálculo de CAPAs</h2>
+                <p id="uploadDescription" class="text-slate-500 mb-6">Carregue o seu ficheiro Excel ou CSV de CAPAs para iniciar a análise detalhada.</p>
+                
+                <div id="dropZone" class="border-2 border-dashed border-slate-300 rounded-2xl p-10 cursor-pointer hover:bg-slate-50 transition-colors flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-cloud-arrow-up text-5xl mb-4"></i>
+                    <p class="text-slate-600 font-medium text-lg mb-1">Arraste e largue o seu ficheiro aqui</p>
+                    <p class="text-slate-400 text-sm mb-4">ou clique para procurar no seu computador (Formatos válidos: .xlsx, .xls, .csv)</p>
+                    <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="hidden">
+                    <button onclick="document.getElementById('fileInput').click()" class="bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 font-bold py-2.5 px-6 rounded-xl shadow-md transition-colors">
+                        Selecionar Ficheiro
+                    </button>
+                </div>
+                <div id="loadingIndicator" class="hidden mt-6">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-2"></i>
+                    <p class="text-slate-600 font-medium">A processar dados e a organizar cronogramas...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard (Oculto inicialmente, visível quando a aba ativa contiver dados) -->
+        <div id="dashboardSection" class="hidden opacity-0 transition-opacity duration-300">
+            
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h2 id="dashboardTitle" class="text-2xl font-bold text-slate-800">Visão Geral</h2>
+                    <p id="dashboardSubtitle" class="text-sm text-slate-500 mt-1"></p>
+                </div>
+                <button onclick="resetDashboard()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-xl transition-colors flex items-center gap-2 font-medium self-start sm:self-center">
+                    <i class="fa-solid fa-trash-can"></i> Limpar Esta Base de Dados
+                </button>
+            </div>
+
+            <!-- Painel de Filtros Ativos -->
+            <div id="filterContainer" class="hidden mb-6 bg-amber-50 border border-[#FFCC00]/50 p-4 rounded-xl flex flex-col gap-3 shadow-sm animate-fade-in">
+                <div class="flex items-center gap-2 text-slate-900 text-sm font-bold">
+                    <i class="fa-solid fa-filter"></i> Filtros Aplicados:
+                </div>
+                <div id="filterBadges" class="flex flex-wrap gap-2">
+                    <!-- Badges inseridas dinamicamente via JS -->
+                </div>
+                <button onclick="clearAllFilters()" class="text-xs text-[#D40511] hover:text-red-800 font-bold self-start underline cursor-pointer">
+                    Limpar Todos os Filtros
+                </button>
+            </div>
+
+            <!-- KPIs Informativos -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Total Geral -->
+                <div onclick="clearAllFilters()" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-[#FFCC00] cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all duration-200 group">
+                    <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-slate-900 transition-colors">Total Geral</p>
+                    <h3 class="text-3xl font-bold text-slate-800 group-hover:text-slate-900 transition-colors" id="kpiTotal">-</h3>
+                    <p class="text-[11px] text-slate-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Ver todos os registos (Limpar filtros)</p>
+                </div>
+                <!-- Vencidos -->
+                <div onclick="toggleFilter('status', 'Vencido')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:bg-red-50 transition-all duration-200 group">
+                    <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-red-600 transition-colors">Vencidos</p>
+                    <h3 class="text-3xl font-bold text-red-600 group-hover:text-red-700 transition-colors" id="kpiVencidos">-</h3>
+                    <p class="text-[11px] text-red-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Alternar filtro atrasados</p>
+                </div>
+                <!-- Críticos (Menos de 7 dias) -->
+                <div onclick="toggleFilter('status', 'Crítico (< 7 dias)')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-orange-500 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:bg-orange-50 transition-all duration-200 group">
+                    <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-orange-600 transition-colors">Crítico (< 7 Dias)</p>
+                    <h3 class="text-3xl font-bold text-orange-500 group-hover:text-orange-600 transition-colors" id="kpi7Dias">-</h3>
+                    <p class="text-[11px] text-orange-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Alternar filtro urgência elevada</p>
+                </div>
+                <!-- Atenção (Menos de 30 dias) -->
+                <div onclick="toggleFilter('status', 'Atenção (< 30 dias)')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:bg-yellow-50 transition-all duration-200 group">
+                    <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-yellow-600 transition-colors">Atenção (< 30 Dias)</p>
+                    <h3 class="text-3xl font-bold text-yellow-500 group-hover:text-yellow-600 transition-colors" id="kpi30Dias">-</h3>
+                    <p class="text-[11px] text-yellow-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Alternar filtro atenção moderada</p>
+                </div>
+            </div>
+
+            <!-- Painel de Gráficos -->
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+                <!-- Gráfico de Prazo -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+                    <h3 class="text-lg font-bold text-slate-700 mb-4 text-center">Distribuição de Volume por Data Limite</h3>
+                    <div class="relative flex-grow min-h-[250px] w-full">
+                        <canvas id="chartStatus"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Integrantes -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
+                    <h3 class="text-lg font-bold text-slate-700 mb-4">Volume por Integrante / Estado</h3>
+                    <div class="relative flex-grow min-h-[300px] w-full">
+                        <canvas id="chartResponsavel"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Ocorrências Detalhada -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-12">
+                <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-700">Detalhe das Ocorrências</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Ordenado por prioridade de urgência dos prazos de entrega</p>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" id="searchInput" placeholder="Procurar responsável, ID, descrição..." class="pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#FFCC00] w-full transition-all bg-white shadow-sm">
+                        <i class="fa-solid fa-search absolute left-3.5 top-3 text-xs"></i>
+                    </div>
+                </div>
+                <div class="table-container overflow-x-auto w-full">
+                    <table class="w-full whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-left text-xs uppercase font-bold tracking-wider border-b border-slate-100">
+                                <th class="py-4 px-6">Estado do Prazo</th>
+                                <th id="thColId" class="py-4 px-6">Número da Ação / Local</th>
+                                <th class="py-4 px-6">Descrição / Assunto</th>
+                                <th class="py-4 px-6">Responsável Atribuído</th>
+                                <th class="py-4 px-6">Fase/Situação</th>
+                                <th class="py-4 px-6">Data Limite</th>
+                                <th class="py-4 px-6">Dias Restantes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-slate-100 text-sm">
+                            <!-- Inserido dinamicamente por JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="emptyTableMsg" class="hidden p-10 text-center text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass text-3xl text-slate-200 mb-2 block"></i>
+                    Nenhum registo encontrado para os filtros aplicados de momento.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Botão Flutuante de Filtros -->
+    <button id="floatingFilterBtn" onclick="toggleFilterDrawer(true)" class="hidden fixed bottom-6 right-6 z-30 bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 rounded-full p-4 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 group">
+        <span class="relative flex h-5 w-5 items-center justify-center">
+            <i class="fa-solid fa-filter text-lg !text-slate-900"></i>
+            <span id="filterActiveBadge" class="absolute -top-2.5 -right-2.5 bg-[#D40511] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
+        </span>
+        <span class="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-out font-bold text-sm whitespace-nowrap text-slate-900">
+            Filtros Avançados
+        </span>
+    </button>
+
+    <!-- Overlay de Fundo (Backdrop escurecido) -->
+    <div id="filterDrawerBackdrop" onclick="toggleFilterDrawer(false)" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 hidden opacity-0 transition-opacity duration-300"></div>
+
+    <!-- Painel Lateral de Filtros (Drawer Z-50) -->
+    <div id="filterDrawer" class="fixed top-0 right-0 h-full w-80 md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out border-l border-slate-200 flex flex-col">
+        <!-- Cabeçalho do Painel -->
+        <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div class="flex items-center gap-2.5">
+                <i class="fa-solid fa-sliders text-lg"></i>
+                <h3 class="font-bold text-slate-800 text-lg">Filtros Avançados</h3>
+            </div>
+            <button onclick="toggleFilterDrawer(false)" class="text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Conteúdo dos Seletores de Filtros Dinâmicos -->
+        <div class="p-6 flex-grow overflow-y-auto space-y-5 custom-scrollbar bg-slate-50/35">
+            <!-- Filtro por Responsável -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Responsável Atribuído</label>
+                    <button onclick="clearFilterGroup('responsavel')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
+                </div>
+                <input type="text" id="searchFilterResponsavel" placeholder="Procurar responsável..." oninput="filterChecklist('responsavel', this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-[#FFCC00] bg-white">
+                <div id="filterContainerResponsavel" class="border border-slate-200 rounded-xl p-3 max-h-36 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
+            </div>
+
+            <!-- Filtro por Localização -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Localização</label>
+                    <button onclick="clearFilterGroup('localizacao')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
+                </div>
+                <input type="text" id="searchFilterLocalizacao" placeholder="Procurar localização..." oninput="filterChecklist('localizacao', this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-[#FFCC00] bg-white">
+                <div id="filterContainerLocalizacao" class="border border-slate-200 rounded-xl p-3 max-h-36 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
+            </div>
+
+            <!-- Filtro por Estado (Status de Prazo) -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Estado do Prazo</label>
+                    <button onclick="clearFilterGroup('status')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
+                </div>
+                <div id="filterContainerStatus" class="border border-slate-200 rounded-xl p-3 max-h-28 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
+            </div>
+
+            <!-- Filtro por Fase/Situação -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Fase / Situação</label>
+                    <button onclick="clearFilterGroup('fase')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
+                </div>
+                <input type="text" id="searchFilterFase" placeholder="Procurar fase..." oninput="filterChecklist('fase', this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-[#FFCC00] bg-white">
+                <div id="filterContainerFase" class="border border-slate-200 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
+            </div>
+
+            <!-- Filtro por Data Limite -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Data Limite</label>
+                    <button onclick="clearFilterGroup('vencimento')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
+                </div>
+                <input type="text" id="searchFilterVencimento" placeholder="Procurar data..." oninput="filterChecklist('vencimento', this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-[#FFCC00] bg-white">
+                <div id="filterContainerVencimento" class="border border-slate-200 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
+            </div>
+        </div>
+
+        <!-- Rodapé do Painel -->
+        <div class="p-6 border-t border-slate-100 bg-slate-50 flex gap-3">
+            <button onclick="clearAllFilters(); toggleFilterDrawer(false);" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+                Limpar Tudo
+            </button>
+            <button onclick="toggleFilterDrawer(false)" class="flex-1 py-2.5 bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 rounded-xl text-sm font-bold transition-colors shadow-md shadow-amber-100">
+                Fechar
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts de Integração e Controlo de Estados -->
+    <script>
+        // Meses traduzidos para conversão correta de datas textuais
+        const ptMonths = {
+            'jan': 0, 'fev': 1, 'mar': 2, 'abr': 3, 'mai': 4, 'jun': 5,
+            'jul': 6, 'ago': 7, 'set': 8, 'out': 9, 'nov': 10, 'dez': 11
+        };
+
+        // Estado Global de Dados Multibase
+        let currentDb = 'capa'; // Aba ativa padrão
+        let databases = {
+            capa: { name: 'CAPAs', data: [], fileName: null },
+            acoesCapa: { name: 'Ações de CAPA', data: [], fileName: null },
+            gmuds: { name: 'GMUDs', data: [], fileName: null },
+            acoesGmud: { name: 'Ações de GMUD', data: [], fileName: null }
+        };
+
+        // Filtros Ativos (Suporta Seleção Múltipla via Arrays!)
+        let parsedData = []; 
+        let charts = {};
+        let activeFilters = {
+            vencimento: [],
+            responsavel: [],
+            status: [],
+            fase: [],
+            localizacao: []
+        };
+
+        // Seleção de Elementos DOM
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadSection = document.getElementById('uploadSection');
+        const dashboardSection = document.getElementById('dashboardSection');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const searchInput = document.getElementById('searchInput');
+
+        // Configurações de Drag and Drop (Arrastar e Largar)
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) { dropZone.classList.add('drag-active'); }
+        function unhighlight(e) { dropZone.classList.remove('drag-active'); }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', handleFileSelect, false);
+        searchInput.addEventListener('input', () => {
+            if (parsedData.length > 0) applyFilters();
+        });
+
+        // Alternar visualização entre as bases (CAPA, Ações CAPA, GMUD, Ações GMUD)
+        function switchTab(key) {
+            currentDb = key;
+            updateTabsUI();
+            
+            // Limpa o termo de pesquisa atual
+            searchInput.value = '';
+            
+            // Alteração dinâmica de rótulos consoante a aba
+            const uploadTitle = document.getElementById('uploadTitle');
+            const uploadDescription = document.getElementById('uploadDescription');
+            const thColId = document.getElementById('thColId');
+
+            const dbConfigs = {
+                capa: { name: 'CAPAs', labelId: 'Número do CAPA / Local', desc: 'Carregue o seu ficheiro Excel ou CSV de CAPAs.' },
+                acoesCapa: { name: 'Ações de CAPA', labelId: 'Número da Ação / Local', desc: 'Carregue o seu ficheiro contendo as Ações das suas CAPAs.' },
+                gmuds: { name: 'GMUDs', labelId: 'Número da GMUD / Local', desc: 'Carregue o seu ficheiro de Gestão de Mudanças (GMUDs).' },
+                acoesGmud: { name: 'Ações de GMUD', labelId: 'Número da Ação / Local', desc: 'Carregue o seu ficheiro contendo as Ações associadas às GMUDs.' }
+            };
+
+            uploadTitle.innerText = `Importar Folha de Cálculo de ${dbConfigs[key].name}`;
+            uploadDescription.innerHTML = dbConfigs[key].desc;
+            if (thColId) thColId.innerText = dbConfigs[key].labelId;
+
+            // Atribui os dados à variável espelho de processamento ativo
+            parsedData = databases[key].data;
+
+            if (parsedData && parsedData.length > 0) {
+                // Se já existem dados, esconde upload e mostra os dashboards
+                uploadSection.classList.add('hidden');
+                dashboardSection.classList.remove('hidden');
+                document.getElementById('floatingFilterBtn').classList.remove('hidden');
+                
+                document.getElementById('dashboardTitle').innerText = `Visão Geral - ${dbConfigs[key].name}`;
+                document.getElementById('dashboardSubtitle').innerHTML = `Ficheiro ativo: <span class="font-bold text-[#D40511]">${databases[key].fileName}</span>`;
+                
+                setTimeout(() => dashboardSection.classList.remove('opacity-0'), 50);
+
+                // Limpa filtros antigos, limpa as barras de pesquisa dos filtros e roda o pipeline completo
+                activeFilters = { vencimento: [], responsavel: [], status: [], fase: [], localizacao: [] };
+                
+                const searchIds = ['searchFilterResponsavel', 'searchFilterLocalizacao', 'searchFilterFase', 'searchFilterVencimento'];
+                searchIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+
+                applyFilters(); 
+            } else {
+                // Se não houver ficheiro importado nesta aba, mostra painel de upload
+                dashboardSection.classList.add('opacity-0');
+                document.getElementById('floatingFilterBtn').classList.add('hidden');
+                setTimeout(() => {
+                    dashboardSection.classList.add('hidden');
+                    uploadSection.classList.remove('hidden');
+                }, 200);
+            }
+        }
+
+        // Atualizar estilização dos botões superiores de seleção de bases com a nova identidade visual
+        function updateTabsUI() {
+            const keys = ['capa', 'acoesCapa', 'gmuds', 'acoesGmud'];
+            keys.forEach(key => {
+                const btn = document.getElementById(`tab-${key}`);
+                const badge = document.getElementById(`badge-${key}`);
+                const fileNameEl = document.getElementById(`fileName-${key}`);
+                
+                const isLoaded = databases[key].data.length > 0;
+                
+                if (isLoaded) {
+                    badge.className = "w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200 animate-pulse border border-white";
+                    fileNameEl.innerText = databases[key].fileName;
+                    fileNameEl.className = "text-[10px] text-slate-500 font-semibold block max-w-[140px] truncate mt-0.5";
+                } else {
+                    badge.className = "w-2.5 h-2.5 rounded-full bg-slate-300";
+                    fileNameEl.innerText = "Sem ficheiro";
+                    fileNameEl.className = "text-[10px] text-slate-400 font-normal italic block mt-0.5";
+                }
+                
+                if (key === currentDb) {
+                    btn.className = "flex items-center justify-between p-4 rounded-xl border-2 border-[#FFCC00] bg-[#FFCC00]/10 shadow-sm text-left transition-all duration-200 ring-4 ring-amber-100";
+                    btn.querySelector('.shrink-0').className = "w-10 h-10 rounded-lg bg-[#FFCC00] text-slate-900 flex items-center justify-center text-lg font-bold shrink-0 shadow-md shadow-amber-200 transition-all";
+                } else {
+                    btn.className = "flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200";
+                    btn.querySelector('.shrink-0').className = "w-10 h-10 rounded-lg bg-amber-50 text-[#D40511] flex items-center justify-center text-lg font-bold shrink-0 transition-all";
+                }
+            });
+        }
+
+        // Lidar com Drag, Drop e Leitura
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) handleFiles(files[0]);
+        }
+
+        // Lidar com seleção de ficheiro
+        function handleFileSelect(e) {
+            if (e.target.files.length > 0) handleFiles(e.target.files[0]);
+        }
+
+        function handleFiles(file) {
+            if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
+                showMessage("Por favor, selecione um ficheiro Excel ou CSV válido.", "error");
+                return;
+            }
+
+            loadingIndicator.classList.remove('hidden');
+            dropZone.classList.add('opacity-50', 'pointer-events-none');
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+
+                    // Ler folha como matriz pura
+                    const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+
+                    processData(rawData, file.name);
+                } catch (error) {
+                    console.error(error);
+                    showMessage("Erro ao ler a folha de cálculo. Verifique se o ficheiro não está corrompido.", "error");
+                } finally {
+                    loadingIndicator.classList.add('hidden');
+                    dropZone.classList.remove('opacity-50', 'pointer-events-none');
+                    fileInput.value = ''; // Reseta input para aceitar novas importações
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Processar Dados Brutos da Folha Importada
+        function processData(rawData, fileName) {
+            if (!rawData || rawData.length === 0) {
+                showMessage("A folha de cálculo está vazia.", "warning");
+                return;
+            }
+
+            // Pesquisa de correspondência inteligente do cabeçalho
+            let headerRowIndex = 0;
+            let maxMatches = 0;
+            const keywordsForHeader = ['capa', 'numero', 'assunto', 'atividade', 'responsavel', 'atribuido', 'vencimento', 'data', 'prazo', 'termino', 'fase', 'status', 'etapa', 'situacao', 'gmud', 'ação', 'acao', 'solicitacao', 'executor', 'localização', 'localizacao', 'location'];
+
+            for (let i = 0; i < Math.min(rawData.length, 50); i++) {
+                const row = rawData[i];
+                let matches = 0;
+                row.forEach(cell => {
+                    if (typeof cell === 'string') {
+                        const cellClean = cell.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                        if (keywordsForHeader.some(kw => cellClean.includes(kw))) {
+                            matches++;
+                        }
+                    }
+                });
+                if (matches > maxMatches) {
+                    maxMatches = matches;
+                    headerRowIndex = i;
+                }
+            }
+
+            const headers = rawData[headerRowIndex].map(h => String(h).trim());
+
+            const getColName = (headerList, keywords) => {
+                let exactMatch = headerList.find(h => {
+                    if (h === undefined || h === null) return false;
+                    const hClean = String(h).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                    return keywords.some(kw => hClean === kw);
+                });
+
+                if (exactMatch) return exactMatch;
+
+                return headerList.find(h => {
+                    if (h === undefined || h === null) return false;
+                    const hClean = String(h).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+                    return keywords.some(kw => hClean.includes(kw));
+                }) || null;
+            };
+
+            // Mapeamentos de campos suportados para CAPA, GMUD e Localização
+            const colCapa = getColName(headers, ['numero', 'capa', 'codigo', 'gmud', 'mudança', 'id', 'solicitação', 'num', 'identificador', 'ação', 'acao']);
+            const colAssunto = getColName(headers, ['assunto', 'atividade', 'titulo', 'descricao', 'texto', 'detalhe', 'resumo', 'nome', 'descrição']);
+            const colResp = getColName(headers, ['responsavel', 'atribuido', 'nome', 'owner', 'analista', 'executor', 'responsável']);
+            const colVenc = getColName(headers, ['vencimento', 'prazo', 'termino', 'limite', 'fim', 'data conclusão', 'conclusão', 'conclusao', 'venc']);
+            const colFase = getColName(headers, ['fase', 'status', 'etapa', 'passo', 'estado', 'situacao', 'situação', 'grupo', 'situação atual']);
+            const colLocalizacao = getColName(headers, ['localizacao', 'localização', 'location', 'local', 'filial', 'site', 'unidade']);
+
+            if (!colCapa && !colResp && !colVenc && !colFase) {
+                const colunasAchadas = headers.filter(h => h !== "").slice(0, 5).join(", ") + "...";
+                showMessage(`Não foi possível mapear as colunas corretas automaticamente. Encontrado na linha de cabeçalho: [${colunasAchadas}].`, "error");
+                return;
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            let tempParsed = [];
+
+            for (let i = headerRowIndex + 1; i < rawData.length; i++) {
+                const rowArray = rawData[i];
+                if (rowArray.every(cell => cell === "")) continue; // Ignora linhas em branco
+
+                const row = {};
+                headers.forEach((h, index) => { row[h] = rowArray[index]; });
+
+                let rawDate = colVenc ? row[colVenc] : null;
+                let dueDate = null;
+                let validDate = false;
+
+                if (rawDate) {
+                    if (rawDate instanceof Date && !isNaN(rawDate)) {
+                        dueDate = rawDate;
+                        validDate = true;
+                    } else if (typeof rawDate === 'number') {
+                        dueDate = new Date(Math.round((rawDate - 25569) * 86400 * 1000));
+                        dueDate.setMinutes(dueDate.getMinutes() + dueDate.getTimezoneOffset());
+                        validDate = true;
+                    } else if (typeof rawDate === 'string') {
+                        const strClean = rawDate.trim().toLowerCase();
+                        const ptMatch = strClean.match(/^(\d{1,2})[\/\-\s]+([a-z]{3})[\/\-\s]+(\d{2,4})/);
+
+                        if (ptMatch && ptMonths[ptMatch[2]] !== undefined) {
+                            let year = parseInt(ptMatch[3]);
+                            if (year < 100) year += 2000;
+                            dueDate = new Date(year, ptMonths[ptMatch[2]], parseInt(ptMatch[1]));
+                            validDate = true;
+                        } else {
+                            const parts = strClean.split(/[\/\-\sT]/);
+                            if (parts.length >= 3) {
+                                if (parts[2].length === 4 && !isNaN(parts[1])) {
+                                    dueDate = new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+                                    validDate = true;
+                                } else if (parts[0].length === 4 && !isNaN(parts[1])) {
+                                    dueDate = new Date(parts[0], parseInt(parts[1]) - 1, parts[2]);
+                                    validDate = true;
+                                }
+                            }
+
+                            if (!validDate) {
+                                dueDate = new Date(rawDate);
+                                if (!isNaN(dueDate.getTime())) validDate = true;
+                            }
+                        }
+                    }
+                }
+
+                let diasRestantes = null;
+                let statusGroup = 'Sem Data';
+                let statusColor = 'gray';
+
+                if (validDate) {
+                    const utcDueDate = Date.UTC(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+                    const utcToday = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+                    diasRestantes = Math.floor((utcDueDate - utcToday) / (1000 * 60 * 60 * 24));
+
+                    if (diasRestantes < 0) {
+                        statusGroup = 'Vencido';
+                        statusColor = 'red';
+                    } else if (diasRestantes <= 7) {
+                        statusGroup = 'Crítico (< 7 dias)';
+                        statusColor = 'orange';
+                    } else if (diasRestantes <= 30) {
+                        statusGroup = 'Atenção (< 30 dias)';
+                        statusColor = 'yellow';
+                    } else {
+                        statusGroup = 'No Prazo (> 30 dias)';
+                        statusColor = 'green';
+                    }
+                }
+
+                let rawResp = (colResp && row[colResp]) ? String(row[colResp]).trim() : 'Não Atribuído';
+                let cleanResp = rawResp.split('(')[0].trim();
+
+                tempParsed.push({
+                    capa: (colCapa && row[colCapa]) ? String(row[colCapa]).trim() : 'N/D',
+                    assunto: (colAssunto && row[colAssunto]) ? String(row[colAssunto]).trim() : '-',
+                    responsavel: cleanResp || 'Não Atribuído',
+                    fase: (colFase && row[colFase]) ? String(row[colFase]).trim() : 'Desconhecida',
+                    vencimento: validDate ? dueDate : null,
+                    vencimentoFormatado: validDate ? dueDate.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Sem Data Limite',
+                    diasRestantes: diasRestantes,
+                    statusGroup: statusGroup,
+                    statusColor: statusColor,
+                    localizacao: (colLocalizacao && row[colLocalizacao]) ? String(row[colLocalizacao]).trim() : 'Não Informada'
+                });
+            }
+
+            // CORREÇÃO: Remove registos onde a coluna "Fase" é igual a "Closed", "Closed without Action", "Completed" ou "Voided" (case-insensitive) e valida dados vazios
+            tempParsed = tempParsed.filter(item => {
+                const isNotEmpty = (item.capa !== 'N/D' && item.capa !== 'undefined' && item.capa !== '') ||
+                                   (item.responsavel !== 'Não Atribuído' && item.responsavel !== 'undefined' && item.responsavel !== '');
+                const faseLower = item.fase.toLowerCase().trim();
+                const isNotClosed = faseLower !== 'closed' && 
+                                    faseLower !== 'closed without action' &&
+                                    faseLower !== 'completed' &&
+                                    faseLower !== 'voided';
+                
+                return isNotEmpty && isNotClosed;
+            });
+
+            if (tempParsed.length === 0) {
+                showMessage("Não foram detetados dados válidos compatíveis (ou todos os registos estão marcados como Closed / Closed without Action / Completed / Voided). Verifique as colunas do ficheiro.", "warning");
+                return;
+            }
+
+            // Armazena no slot da base de dados ativa correspondente
+            databases[currentDb].data = tempParsed;
+            databases[currentDb].fileName = fileName;
+
+            // Recarrega visualização da aba
+            switchTab(currentDb);
+        }
+
+        // Atualizar painéis, gráficos e widgets dinâmicos (Permite passar um conjunto de dados filtrado)
+        function updateDashboardWidgets(dataToRender) {
+            const data = dataToRender || parsedData;
+            renderKPIs(data);
+
+            const colors = {
+                'Vencido': '#ef4444',
+                'Crítico (< 7 dias)': '#f97316',
+                'Atenção (< 30 dias)': '#eab308',
+                'No Prazo (> 30 dias)': '#22c55e',
+                'Sem Data': '#94a3b8'
+            };
+
+            // Gráfico 1: Datas Limite (Usa o conjunto de dados filtrado com a cor amarela #FFCC00)
+            const dateGroups = {};
+            data.forEach(d => {
+                const label = d.vencimentoFormatado;
+                if (!dateGroups[label]) {
+                    dateGroups[label] = {
+                        count: 0,
+                        timestamp: d.vencimento ? d.vencimento.getTime() : Infinity
+                    };
+                }
+                dateGroups[label].count++;
+            });
+
+            const sortedDateLabels = Object.keys(dateGroups).sort((a, b) => dateGroups[a].timestamp - dateGroups[b].timestamp);
+            const dateCountsData = sortedDateLabels.map(label => dateGroups[label].count);
+
+            createChart('chartStatus', 'bar', {
+                labels: sortedDateLabels,
+                datasets: [{
+                    label: 'Qtd. de Ocorrências',
+                    data: dateCountsData,
+                    backgroundColor: '#FFCC00',
+                    borderRadius: 6
+                }]
+            }, {
+                plugins: { legend: { display: false } },
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
+                    }
+                },
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const label = sortedDateLabels[index];
+                        toggleFilter('vencimento', label);
+                    }
+                },
+                onHover: (e, elements) => { e.native.target.style.cursor = elements[0] ? 'pointer' : 'default'; }
+            });
+
+            // Gráfico 2: Organização por Responsáveis (Usa o conjunto de dados filtrado)
+            const respData = {};
+            data.forEach(d => {
+                if (!respData[d.responsavel]) {
+                    respData[d.responsavel] = { 'Vencido': 0, 'Crítico (< 7 dias)': 0, 'Atenção (< 30 dias)': 0, 'No Prazo (> 30 dias)': 0, 'Sem Data': 0 };
+                }
+                respData[d.responsavel][d.statusGroup]++;
+            });
+
+            const respLabels = Object.keys(respData).sort((a, b) => {
+                const scoreA = (respData[a]['Vencido'] * 100) + (respData[a]['Crítico (< 7 dias)'] * 10);
+                const scoreB = (respData[b]['Vencido'] * 100) + (respData[b]['Crítico (< 7 dias)'] * 10);
+                return scoreB - scoreA;
+            });
+
+            const datasetsResp = Object.keys(colors).map(status => ({
+                label: status,
+                data: respLabels.map(r => respData[r][status]),
+                backgroundColor: colors[status],
+            })).filter(ds => ds.data.some(v => v > 0));
+
+            createChart('chartResponsavel', 'bar', {
+                labels: respLabels,
+                datasets: datasetsResp
+            }, {
+                indexAxis: 'y',
+                scales: {
+                    x: { stacked: true },
+                    y: { stacked: true }
+                },
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+                maintainAspectRatio: false,
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const dataIndex = elements[0].index;
+                        const datasetIndex = elements[0].datasetIndex;
+                        const resp = respLabels[dataIndex];
+                        const status = datasetsResp[datasetIndex].label;
+
+                        // Alterna cumulativamente ambos os filtros no clique do gráfico
+                        toggleFilter('responsavel', resp);
+                        toggleFilter('status', status);
+                    }
+                },
+                onHover: (e, elements) => { e.native.target.style.cursor = elements[0] ? 'pointer' : 'default'; }
+            });
+        }
+
+        // Renderização dos Painéis Principais (KPIs)
+        function renderKPIs(data) {
+            const totais = data.length;
+            const vencidos = data.filter(d => d.statusGroup === 'Vencido').length;
+            const vencem7 = data.filter(d => d.statusGroup === 'Crítico (< 7 dias)').length;
+            const vencem30 = data.filter(d => d.statusGroup === 'Atenção (< 30 dias)').length;
+
+            document.getElementById('kpiTotal').innerText = totais;
+            document.getElementById('kpiVencidos').innerText = vencidos;
+            document.getElementById('kpi7Dias').innerText = vencem7;
+            document.getElementById('kpi30Dias').innerText = vencem30;
+        }
+
+        // Nova Lógica Multi-Seleção: Insere ou remove o elemento de um array de filtros
+        function toggleFilter(type, value) {
+            if (value === null) {
+                activeFilters[type] = [];
+            } else {
+                const idx = activeFilters[type].indexOf(value);
+                if (idx > -1) {
+                    activeFilters[type].splice(idx, 1); // Se já existia, remove
+                } else {
+                    activeFilters[type].push(value); // Senão, adiciona
+                }
+            }
+            applyFilters();
+        }
+
+        // Limpa todas as seleções de um grupo de filtros específico (ex: Limpar todos os responsáveis)
+        function clearFilterGroup(type) {
+            activeFilters[type] = [];
+            applyFilters();
+            
+            // Re-instancia as listas para limpar caixas e buscas textuais
+            populateFilterChecklists();
+            const searchInput = document.getElementById('searchFilter' + type.charAt(0).toUpperCase() + type.slice(1));
+            if (searchInput) searchInput.value = '';
+        }
+
+        // Limpa absolutamente todos os filtros ativos de todas as colunas
+        function clearAllFilters() {
+            activeFilters = { vencimento: [], responsavel: [], status: [], fase: [], localizacao: [] };
+            
+            const searchIds = ['searchFilterResponsavel', 'searchFilterLocalizacao', 'searchFilterFase', 'searchFilterVencimento'];
+            searchIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+            applyFilters();
+        }
+
+        function applyFilters() {
+            let filtered = parsedData.filter(item => {
+                let match = true;
+                
+                // Se o array de filtro contiver elementos, o item tem de estar contido nesse array
+                if (activeFilters.vencimento.length > 0 && !activeFilters.vencimento.includes(item.vencimentoFormatado)) match = false;
+                if (activeFilters.responsavel.length > 0 && !activeFilters.responsavel.includes(item.responsavel)) match = false;
+                if (activeFilters.status.length > 0 && !activeFilters.status.includes(item.statusGroup)) match = false;
+                if (activeFilters.fase.length > 0 && !activeFilters.fase.includes(item.fase)) match = false;
+                if (activeFilters.localizacao.length > 0 && !activeFilters.localizacao.includes(item.localizacao)) match = false;
+                
+                return match;
+            });
+
+            // Atualiza a tabela com o conjunto filtrado de forma responsiva
+            renderTable(filtered);
+            
+            // Atualiza as etiquetas de filtro do topo de forma individual para cada elemento selecionado
+            renderFilterUI();
+            
+            // Atualiza todos os gráficos em tempo real
+            updateDashboardWidgets(filtered);
+
+            // Atualiza o estado visual das checklists e do botão flutuante
+            updateFloatingFilterBadge();
+        }
+
+        // Desenha badges individuais para cada filtro selecionado em qualquer coluna
+        function renderFilterUI() {
+            const container = document.getElementById('filterContainer');
+            const badgesContainer = document.getElementById('filterBadges');
+            
+            // Contabiliza total de filtros selecionados em todos os arrays combinados
+            const totalFilters = Object.values(activeFilters).reduce((sum, arr) => sum + arr.length, 0);
+
+            if (totalFilters === 0) {
+                container.classList.add('hidden');
+            } else {
+                container.classList.remove('hidden');
+                badgesContainer.innerHTML = '';
+
+                const labelNames = { vencimento: 'Data', responsavel: 'Resp.', status: 'Estado', fase: 'Fase', localizacao: 'Local.' };
+
+                Object.keys(activeFilters).forEach(key => {
+                    activeFilters[key].forEach(val => {
+                        const badge = document.createElement('span');
+                        badge.className = 'bg-white border border-[#FFCC00] text-slate-900 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 shadow-sm animate-fade-in';
+
+                        badge.innerHTML = `
+                            <span class="text-slate-400 font-normal">${labelNames[key]}:</span> ${val}
+                            <button onclick="toggleFilter('${key}', '${val}')" class="text-[#D40511] hover:text-red-700 transition-colors ml-1 w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50">
+                                <i class="fa-solid fa-xmark text-xs"></i>
+                            </button>
+                        `;
+                        badgesContainer.appendChild(badge);
+                    });
+                });
+            }
+        }
+
+        // Desenhar Tabela Ordenada por Criticidade de Data
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            const searchVal = document.getElementById('searchInput').value.toLowerCase();
+            const emptyMsg = document.getElementById('emptyTableMsg');
+
+            tbody.innerHTML = '';
+
+            let tableData = data.filter(d =>
+                d.capa.toLowerCase().includes(searchVal) ||
+                d.assunto.toLowerCase().includes(searchVal) ||
+                d.responsavel.toLowerCase().includes(searchVal) ||
+                d.fase.toLowerCase().includes(searchVal) ||
+                d.localizacao.toLowerCase().includes(searchVal)
+            ).sort((a, b) => {
+                if (a.diasRestantes === null) return 1;
+                if (b.diasRestantes === null) return -1;
+                return a.diasRestantes - b.diasRestantes;
+            });
+
+            if (tableData.length === 0) {
+                emptyMsg.classList.remove('hidden');
+            } else {
+                emptyMsg.classList.add('hidden');
+
+                tableData.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-50/70 transition-colors';
+
+                    let badgeClass = 'bg-slate-100 text-slate-800';
+                    let icon = 'fa-circle-question';
+                    if (row.statusColor === 'red') { badgeClass = 'bg-red-100 text-red-800'; icon = 'fa-circle-exclamation'; }
+                    if (row.statusColor === 'orange') { badgeClass = 'bg-orange-100 text-orange-800 border border-orange-200'; icon = 'fa-bell'; }
+                    if (row.statusColor === 'yellow') { badgeClass = 'bg-yellow-100 text-yellow-800 border border-yellow-200'; icon = 'fa-triangle-exclamation'; }
+                    if (row.statusColor === 'green') { badgeClass = 'bg-green-100 text-green-800'; icon = 'fa-circle-check'; }
+
+                    const statusHTML = `<span class="px-2.5 py-1 rounded-full text-xs font-semibold ${badgeClass} flex items-center w-max gap-1">
+                                            <i class="fa-solid ${icon}"></i> ${row.statusGroup}
+                                        </span>`;
+
+                    tr.innerHTML = `
+                        <td class="py-3.5 px-6">${statusHTML}</td>
+                        <td class="py-3.5 px-6 font-semibold text-slate-900">
+                            <div>${row.capa}</div>
+                            <div class="text-[11px] text-slate-400 font-normal truncate max-w-[170px]" title="${row.localizacao}">
+                                <i class="fa-solid fa-location-dot mr-0.5"></i> ${row.localizacao}
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-6 text-slate-700 text-sm whitespace-normal min-w-[200px] max-w-[350px]">${row.assunto}</td>
+                        <td class="py-3.5 px-6 text-slate-700">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-xs font-bold shrink-0">
+                                    ${row.responsavel.charAt(0).toUpperCase()}
+                                </div>
+                                <span class="truncate max-w-[180px] font-medium text-slate-700" title="${row.responsavel}">${row.responsavel}</span>
+                            </div>
+                        </td>
+                        <td class="py-3.5 px-6 text-slate-600 font-medium">${row.fase}</td>
+                        <td class="py-3.5 px-6 text-slate-600 font-semibold">${row.vencimentoFormatado}</td>
+                        <td class="py-3.5 px-6">
+                            ${row.diasRestantes !== null
+                                ? `<span class="font-bold ${row.diasRestantes < 0 ? 'text-red-600' : 'text-slate-700'}">${row.diasRestantes} dias</span>`
+                                : '-'}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        // Criar ou Reconstruir Gráficos sem sobreposição de canvas
+        function createChart(canvasId, type, data, options) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (charts[canvasId]) charts[canvasId].destroy();
+
+            charts[canvasId] = new Chart(ctx, {
+                type: type,
+                data: data,
+                options: { responsive: true, ...options }
+            });
+        }
+
+        // Limpar a base de dados atualmente visualizada
+        function resetDashboard() {
+            fileInput.value = '';
+            databases[currentDb].data = [];
+            databases[currentDb].fileName = null;
+            parsedData = [];
+            clearAllFilters();
+            document.getElementById('floatingFilterBtn').classList.add('hidden');
+            
+            dashboardSection.classList.add('opacity-0');
+            setTimeout(() => {
+                dashboardSection.classList.add('hidden');
+                switchTab(currentDb); // Reverte para painel de carregamento correspondente
+            }, 300);
+        }
+
+        // Lógicas do Painel Lateral de Filtros (Drawer)
+        function toggleFilterDrawer(open) {
+            const drawer = document.getElementById('filterDrawer');
+            const backdrop = document.getElementById('filterDrawerBackdrop');
+            if (open) {
+                populateFilterChecklists();
+                drawer.classList.remove('translate-x-full');
+                backdrop.classList.remove('hidden');
+                setTimeout(() => {
+                    backdrop.classList.remove('opacity-0');
+                    backdrop.classList.add('opacity-100');
+                }, 10);
+            } else {
+                drawer.classList.add('translate-x-full');
+                backdrop.classList.remove('opacity-100');
+                backdrop.classList.add('opacity-0');
+                setTimeout(() => {
+                    backdrop.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        // Preenche dinamicamente os seletores com as opções exclusivas da planilha ativa inteira
+        function populateFilterChecklists() {
+            const fullData = databases[currentDb].data;
+            if (!fullData || fullData.length === 0) return;
+
+            // Extrai valores únicos
+            const responsaveis = [...new Set(fullData.map(d => d.responsavel))].filter(v => v).sort();
+            const localizacoes = [...new Set(fullData.map(d => d.localizacao))].filter(v => v).sort();
+            const estados = [...new Set(fullData.map(d => d.statusGroup))].filter(v => v).sort();
+            const fases = [...new Set(fullData.map(d => d.fase))].filter(v => v).sort();
+
+            // Convenção de datas ordenadas cronologicamente
+            const datesMap = {};
+            fullData.forEach(d => {
+                if (d.vencimentoFormatado && !datesMap[d.vencimentoFormatado]) {
+                    datesMap[d.vencimentoFormatado] = d.vencimento ? d.vencimento.getTime() : Infinity;
+                }
+            });
+            const sortedDateFormats = Object.keys(datesMap).sort((a, b) => datesMap[a] - datesMap[b]);
+
+            // Alimentar checklists das gavetas
+            renderCheckList('filterContainerResponsavel', 'responsavel', responsaveis);
+            renderCheckList('filterContainerLocalizacao', 'localizacao', localizacoes);
+            renderCheckList('filterContainerStatus', 'status', estados);
+            renderCheckList('filterContainerFase', 'fase', fases);
+            renderCheckList('filterContainerVencimento', 'vencimento', sortedDateFormats);
+        }
+
+        // Renderiza cada seletor checklist de forma segura
+        function renderCheckList(containerId, filterKey, items) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            if (items.length === 0) {
+                container.innerHTML = '<span class="text-slate-400 italic">Nenhum valor disponível</span>';
+                return;
+            }
+
+            items.forEach(item => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center gap-2.5 cursor-pointer py-1 px-1.5 hover:bg-slate-50 rounded-lg transition-colors group text-slate-700';
+                
+                const isChecked = activeFilters[filterKey].includes(item);
+                
+                label.innerHTML = `
+                    <input type="checkbox" value="${item}" ${isChecked ? 'checked' : ''} onchange="toggleFilter('${filterKey}', this.value)" class="rounded text-[#D40511] focus:ring-[#FFCC00] border-slate-300 w-4 h-4 transition-all">
+                    <span class="truncate font-medium select-none group-hover:text-slate-900">${item}</span>
+                `;
+                container.appendChild(label);
+            });
+        }
+
+        // Filtra os itens da checklist do painel lateral em tempo real (Search input)
+        function filterChecklist(key, text) {
+            const containerId = 'filterContainer' + key.charAt(0).toUpperCase() + key.slice(1);
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            const items = container.querySelectorAll('label');
+            const searchVal = text.toLowerCase();
+            
+            items.forEach(item => {
+                const labelText = item.querySelector('span').innerText.toLowerCase();
+                if (labelText.includes(searchVal)) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        }
+
+        // Sincroniza visualmente as caixas marcadas e atualiza o contador do botão flutuante
+        function updateFloatingFilterBadge() {
+            const activeCount = Object.values(activeFilters).reduce((sum, arr) => sum + arr.length, 0);
+            const badge = document.getElementById('filterActiveBadge');
+            const btn = document.getElementById('floatingFilterBtn');
+
+            if (activeCount > 0) {
+                badge.innerText = activeCount;
+                badge.classList.remove('hidden');
+                btn.classList.add('ring-4', 'ring-[#FFCC00]/40');
+            } else {
+                badge.classList.add('hidden');
+                btn.classList.remove('ring-4', 'ring-[#FFCC00]/40');
+            }
+
+            // Sincroniza o estado "checked" das caixas de seleção ativas
+            const filterContainers = {
+                responsavel: 'filterContainerResponsavel',
+                localizacao: 'filterContainerLocalizacao',
+                status: 'filterContainerStatus',
+                fase: 'filterContainerFase',
+                vencimento: 'filterContainerVencimento'
+            };
+
+            Object.keys(filterContainers).forEach(key => {
+                const container = document.getElementById(filterContainers[key]);
+                if (container) {
+                    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+                    checkboxes.forEach(cb => {
+                        cb.checked = activeFilters[key].includes(cb.value);
+                    });
+                }
+            });
+        }
+
+        // Modais em HTML para substituição de Alerts nativos de sistema
+        function showMessage(msg, type) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 transition-opacity';
+
+            const icon = type === 'error' ? '<i class="fa-solid fa-triangle-exclamation text-red-500 text-4xl mb-4"></i>' :
+                type === 'warning' ? '<i class="fa-solid fa-circle-exclamation text-yellow-500 text-4xl mb-4"></i>' :
+                    '<i class="fa-solid fa-circle-info text-4xl mb-4"></i>';
+
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center shadow-xl transform transition-all scale-100">
+                    ${icon}
+                    <p class="text-slate-800 font-bold text-lg mb-6">${msg}</p>
+                    <button onclick="this.closest('.fixed').remove()" class="bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 font-bold py-2.5 px-6 rounded-xl transition-colors w-full">
+                        Compreendido
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // Inicialização primária
+        document.addEventListener("DOMContentLoaded", () => {
+            switchTab('capa');
+        });
+    </script>
+</body>
+</html>

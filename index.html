@@ -383,11 +383,15 @@
             if (parsedData.length > 0) applyFilters();
         });
 
+       // Alternar visualização entre as bases (CAPA, Ações CAPA, GMUD, Ações GMUD)
         function switchTab(key) {
             currentDb = key;
             updateTabsUI();
+            
+            // Limpa o termo de pesquisa atual
             searchInput.value = '';
             
+            // Alteração dinâmica de rótulos consoante a aba
             const uploadTitle = document.getElementById('uploadTitle');
             const uploadDescription = document.getElementById('uploadDescription');
             const thColId = document.getElementById('thColId');
@@ -403,9 +407,11 @@
             uploadDescription.innerHTML = dbConfigs[key].desc;
             if (thColId) thColId.innerText = dbConfigs[key].labelId;
 
+            // Atribui os dados à variável espelho de processamento ativo
             parsedData = databases[key].data;
 
             if (parsedData && parsedData.length > 0) {
+                // CORREÇÃO CRÍTICA AQUI: Primeiro tornamos visível para o Chart.js calcular as dimensões
                 uploadSection.classList.add('hidden');
                 dashboardSection.classList.remove('hidden');
                 document.getElementById('floatingFilterBtn').classList.remove('hidden');
@@ -413,8 +419,9 @@
                 document.getElementById('dashboardTitle').innerText = `Visão Geral - ${dbConfigs[key].name}`;
                 document.getElementById('dashboardSubtitle').innerHTML = `Ficheiro ativo: <span class="font-bold text-[#D40511]">${databases[key].fileName}</span>`;
                 
-                setTimeout(() => dashboardSection.classList.remove('opacity-0'), 50);
+                dashboardSection.classList.remove('opacity-0');
 
+                // Reseta buscas e executa o pipeline completo AGORA com o elemento visível
                 activeFilters = { vencimento: [], responsavel: [], status: [], fase: [], localizacao: [] };
                 
                 ['searchFilterResponsavel', 'searchFilterLocalizacao', 'searchFilterFase', 'searchFilterVencimento'].forEach(id => {
@@ -422,8 +429,10 @@
                     if (el) el.value = '';
                 });
 
+                // Agora sim os gráficos serão construídos sobre elementos visíveis
                 applyFilters(); 
             } else {
+                // Se não houver ficheiro importado nesta aba, mostra painel de upload
                 dashboardSection.classList.add('opacity-0');
                 document.getElementById('floatingFilterBtn').classList.add('hidden');
                 setTimeout(() => {

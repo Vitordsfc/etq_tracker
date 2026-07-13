@@ -1,3 +1,4 @@
+<!--:Painel de Tracking ETQ:index.html-->
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
@@ -5,9 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Tracking ETQ</title>
     
+    <!-- Tailwind CSS para Estilização Responsiva -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para Gráficos Dinâmicos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS para ler Excel (.xlsx) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- FontAwesome para Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
@@ -45,6 +50,7 @@
 </head>
 <body class="text-gray-800 relative min-h-screen">
 
+    <!-- Barra de Navegação -->
     <nav class="bg-slate-900 border-b-4 border-[#FFCC00] text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
@@ -59,12 +65,14 @@
         </div>
     </nav>
 
+    <!-- Seletor de Base de Dados Ativa (Abas) -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest px-1 mb-3">
                 <i class="fa-solid fa-database mr-1"></i> Selecionar Base de Dados Ativa
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <!-- Tab CAPA -->
                 <button id="tab-capa" onclick="switchTab('capa')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0 group-hover:scale-105 transition-transform">
@@ -78,6 +86,7 @@
                     <span id="badge-capa" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
                 </button>
 
+                <!-- Tab Ações de CAPA -->
                 <button id="tab-acoesCapa" onclick="switchTab('acoesCapa')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0 group-hover:scale-105 transition-transform">
@@ -91,6 +100,7 @@
                     <span id="badge-acoesCapa" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
                 </button>
 
+                <!-- Tab GMUDs -->
                 <button id="tab-gmuds" onclick="switchTab('gmuds')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0 group-hover:scale-105 transition-transform">
@@ -104,6 +114,7 @@
                     <span id="badge-gmuds" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
                 </button>
 
+                <!-- Tab Ações de GMUD -->
                 <button id="tab-acoesGmud" onclick="switchTab('acoesGmud')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0 group-hover:scale-105 transition-transform">
@@ -120,8 +131,10 @@
         </div>
     </div>
 
+    <!-- Área de Exibição Principal -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
+        <!-- Secção de Carregamento/Upload -->
         <div id="uploadSection" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 mb-8 transition-all duration-300">
             <div class="text-center">
                 <h2 id="uploadTitle" class="text-2xl font-bold text-slate-700 mb-2">Importar Folha de Cálculo de CAPAs</h2>
@@ -143,6 +156,7 @@
             </div>
         </div>
 
+        <!-- Dashboard (Exibido quando a aba ativa contiver dados) -->
         <div id="dashboardSection" class="hidden opacity-0 transition-opacity duration-300">
             
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -155,33 +169,38 @@
                 </button>
             </div>
 
+            <!-- Painel de Filtros Ativos -->
             <div id="filterContainer" class="hidden mb-6 bg-amber-50 border border-[#FFCC00]/50 p-4 rounded-xl flex flex-col gap-3 shadow-sm animate-fade-in">
                 <div class="flex items-center gap-2 text-slate-900 text-sm font-bold">
                     <i class="fa-solid fa-filter"></i> Filtros Aplicados:
                 </div>
-                <div id="filterBadges" class="flex flex-wrap gap-2">
-                    </div>
+                <div id="filterBadges" class="flex flex-wrap gap-2"></div>
                 <button onclick="clearAllFilters()" class="text-xs text-[#D40511] hover:text-red-800 font-bold self-start underline cursor-pointer">
                     Limpar Todos os Filtros
                 </button>
             </div>
 
+            <!-- KPIs Informativos -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Total Geral -->
                 <div onclick="clearAllFilters()" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-[#FFCC00] cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all duration-200 group">
                     <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-slate-900 transition-colors">Total Geral</p>
                     <h3 class="text-3xl font-bold text-slate-800 group-hover:text-slate-900 transition-colors" id="kpiTotal">-</h3>
                     <p class="text-[11px] text-slate-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Ver todos os registos (Limpar filtros)</p>
                 </div>
+                <!-- Vencidos -->
                 <div onclick="toggleFilter('status', 'Vencido')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:bg-red-50 transition-all duration-200 group">
                     <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-red-600 transition-colors">Vencidos</p>
                     <h3 class="text-3xl font-bold text-red-600 group-hover:text-red-700 transition-colors" id="kpiVencidos">-</h3>
                     <p class="text-[11px] text-red-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Alternar filtro atrasados</p>
                 </div>
+                <!-- Críticos (Menos de 7 dias) -->
                 <div onclick="toggleFilter('status', 'Crítico (< 7 dias)')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-orange-500 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:bg-orange-50 transition-all duration-200 group">
                     <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-orange-600 transition-colors">Crítico (< 7 Dias)</p>
                     <h3 class="text-3xl font-bold text-orange-500 group-hover:text-orange-600 transition-colors" id="kpi7Dias">-</h3>
                     <p class="text-[11px] text-orange-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Alternar filtro urgência elevada</p>
                 </div>
+                <!-- Atenção (Menos de 30 dias) -->
                 <div onclick="toggleFilter('status', 'Atenção (< 30 dias)')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:bg-yellow-50 transition-all duration-200 group">
                     <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-yellow-600 transition-colors">Atenção (< 30 Dias)</p>
                     <h3 class="text-3xl font-bold text-yellow-500 group-hover:text-yellow-600 transition-colors" id="kpi30Dias">-</h3>
@@ -189,7 +208,9 @@
                 </div>
             </div>
 
+            <!-- Painel de Gráficos -->
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+                <!-- Gráfico de Prazo -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
                     <h3 class="text-lg font-bold text-slate-700 mb-4 text-center">Distribuição de Volume por Data Limite</h3>
                     <div class="relative flex-grow min-h-[250px] w-full">
@@ -197,6 +218,7 @@
                     </div>
                 </div>
 
+                <!-- Gráfico de Integrantes -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
                     <h3 class="text-lg font-bold text-slate-700 mb-4">Volume por Integrante / Estado</h3>
                     <div class="relative flex-grow min-h-[300px] w-full">
@@ -205,6 +227,7 @@
                 </div>
             </div>
 
+            <!-- Tabela de Ocorrências Detalhada -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-12">
                 <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
                     <div>
@@ -229,8 +252,7 @@
                                 <th class="py-4 px-6">Dias Restantes</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody" class="divide-y divide-slate-100 text-sm">
-                            </tbody>
+                        <tbody id="tableBody" class="divide-y divide-slate-100 text-sm"></tbody>
                     </table>
                 </div>
                 <div id="emptyTableMsg" class="hidden p-10 text-center text-slate-400">
@@ -241,6 +263,7 @@
         </div>
     </main>
 
+    <!-- Botão Flutuante de Filtros -->
     <button id="floatingFilterBtn" onclick="toggleFilterDrawer(true)" class="hidden fixed bottom-6 right-6 z-30 bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 rounded-full p-4 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 group">
         <span class="relative flex h-5 w-5 items-center justify-center">
             <i class="fa-solid fa-filter text-lg !text-slate-900"></i>
@@ -251,9 +274,12 @@
         </span>
     </button>
 
+    <!-- Overlay de Fundo -->
     <div id="filterDrawerBackdrop" onclick="toggleFilterDrawer(false)" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 hidden opacity-0 transition-opacity duration-300"></div>
 
+    <!-- Painel Lateral de Filtros (Drawer) -->
     <div id="filterDrawer" class="fixed top-0 right-0 h-full w-80 md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out border-l border-slate-200 flex flex-col">
+        <!-- Cabeçalho do Painel -->
         <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
             <div class="flex items-center gap-2.5">
                 <i class="fa-solid fa-sliders text-lg"></i>
@@ -264,7 +290,9 @@
             </button>
         </div>
 
+        <!-- Conteúdo dos Seletores de Filtros -->
         <div class="p-6 flex-grow overflow-y-auto space-y-5 custom-scrollbar bg-slate-50/35">
+            <!-- Filtro por Responsável -->
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Responsável Atribuído</label>
@@ -274,6 +302,7 @@
                 <div id="filterContainerResponsavel" class="border border-slate-200 rounded-xl p-3 max-h-36 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
             </div>
 
+            <!-- Filtro por Localização -->
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Localização</label>
@@ -283,6 +312,7 @@
                 <div id="filterContainerLocalizacao" class="border border-slate-200 rounded-xl p-3 max-h-36 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
             </div>
 
+            <!-- Filtro por Estado (Status de Prazo) -->
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Estado do Prazo</label>
@@ -291,6 +321,7 @@
                 <div id="filterContainerStatus" class="border border-slate-200 rounded-xl p-3 max-h-28 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
             </div>
 
+            <!-- Filtro por Fase/Situação -->
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Fase / Situação</label>
@@ -300,6 +331,7 @@
                 <div id="filterContainerFase" class="border border-slate-200 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
             </div>
 
+            <!-- Filtro por Data Limite -->
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Data Limite</label>
@@ -310,6 +342,7 @@
             </div>
         </div>
 
+        <!-- Rodapé do Painel -->
         <div class="p-6 border-t border-slate-100 bg-slate-50 flex gap-3">
             <button onclick="clearAllFilters(); toggleFilterDrawer(false);" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
                 Limpar Tudo
@@ -320,15 +353,15 @@
         </div>
     </div>
 
+    <!-- Scripts de Controle do Dashboard Clássico -->
     <script>
-        // Meses traduzidos para conversão correta de datas textuais
         const ptMonths = {
             'jan': 0, 'fev': 1, 'mar': 2, 'abr': 3, 'mai': 4, 'jun': 5,
             'jul': 6, 'ago': 7, 'set': 8, 'out': 9, 'nov': 10, 'dez': 11
         };
 
         // Estado Global de Dados Multibase
-        let currentDb = 'capa'; // Aba ativa padrão
+        let currentDb = 'capa'; 
         let databases = {
             capa: { name: 'CAPAs', data: [], fileName: null },
             acoesCapa: { name: 'Ações de CAPA', data: [], fileName: null },
@@ -336,7 +369,6 @@
             acoesGmud: { name: 'Ações de GMUD', data: [], fileName: null }
         };
 
-        // Filtros Ativos
         let parsedData = []; 
         let charts = {};
         let activeFilters = {
@@ -347,7 +379,6 @@
             localizacao: []
         };
 
-        // Seleção de Elementos DOM
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const uploadSection = document.getElementById('uploadSection');
@@ -355,7 +386,6 @@
         const loadingIndicator = document.getElementById('loadingIndicator');
         const searchInput = document.getElementById('searchInput');
 
-        // Configurações de Drag and Drop
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, preventDefaults, false);
             document.body.addEventListener(eventName, preventDefaults, false);
@@ -366,22 +396,15 @@
             e.stopPropagation();
         }
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
-        });
+        ['dragenter', 'dragover'].forEach(eventName => { dropZone.addEventListener(eventName, highlight, false); });
+        ['dragleave', 'drop'].forEach(eventName => { dropZone.addEventListener(eventName, unhighlight, false); });
 
         function highlight(e) { dropZone.classList.add('drag-active'); }
         function unhighlight(e) { dropZone.classList.remove('drag-active'); }
 
         dropZone.addEventListener('drop', handleDrop, false);
         fileInput.addEventListener('change', handleFileSelect, false);
-        searchInput.addEventListener('input', () => {
-            if (parsedData.length > 0) applyFilters();
-        });
+        searchInput.addEventListener('input', () => { if (parsedData.length > 0) applyFilters(); });
 
         function switchTab(key) {
             currentDb = key;
@@ -408,6 +431,7 @@
             if (parsedData && parsedData.length > 0) {
                 uploadSection.classList.add('hidden');
                 dashboardSection.classList.remove('hidden');
+                
                 const floatBtn = document.getElementById('floatingFilterBtn');
                 if (floatBtn) floatBtn.classList.remove('hidden');
                 
@@ -472,8 +496,7 @@
 
         function handleDrop(e) {
             const dt = e.dataTransfer;
-            const files = dt.files;
-            if (files.length > 0) handleFiles(files[0]);
+            if (dt.files.length > 0) handleFiles(dt.files[0]);
         }
 
         function handleFileSelect(e) {
@@ -527,9 +550,7 @@
                 row.forEach(cell => {
                     if (typeof cell === 'string') {
                         const cellClean = cell.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                        if (keywordsForHeader.some(kw => cellClean.includes(kw))) {
-                            matches++;
-                        }
+                        if (keywordsForHeader.some(kw => cellClean.includes(kw))) { matches++; }
                     }
                 });
                 if (matches > maxMatches) {
@@ -667,6 +688,7 @@
             databases[currentDb].data = tempParsed;
             databases[currentDb].fileName = fileName;
 
+            // Envia para o Firebase (a conversão interna segura de data será realizada dentro do módulo do Firebase)
             if (typeof window.saveDatabaseToFirebase === "function") {
                 window.saveDatabaseToFirebase(currentDb, tempParsed, fileName);
             }
@@ -684,7 +706,15 @@
             const dateGroups = {};
             data.forEach(d => {
                 const label = d.vencimentoFormatado || 'Sem Data Limite';
-                if (!dateGroups[label]) { dateGroups[label] = { count: 0, timestamp: d.vencimento ? new Date(d.vencimento).getTime() : Infinity }; }
+                if (!dateGroups[label]) {
+                    // Verificação defensiva de data para não travar os gráficos com instâncias indefinidas
+                    const dateVal = d.vencimento;
+                    const isValidDate = dateVal && typeof dateVal.getTime === 'function';
+                    dateGroups[label] = {
+                        count: 0,
+                        timestamp: isValidDate ? dateVal.getTime() : Infinity
+                    };
+                }
                 dateGroups[label].count++;
             });
             const sortedDateLabels = Object.keys(dateGroups).sort((a, b) => dateGroups[a].timestamp - dateGroups[b].timestamp);
@@ -728,10 +758,10 @@
             const c7 = document.getElementById('kpi7Dias');
             const c30 = document.getElementById('kpi30Dias');
 
-            if(tot) tot.innerText = data.length;
-            if(ven) ven.innerText = data.filter(d => d.statusGroup === 'Vencido').length;
-            if(c7) c7.innerText = data.filter(d => d.statusGroup === 'Crítico (< 7 dias)').length;
-            if(c30) c30.innerText = data.filter(d => d.statusGroup === 'Atenção (< 30 dias)').length;
+            if (tot) tot.innerText = data.length;
+            if (ven) ven.innerText = data.filter(d => d.statusGroup === 'Vencido').length;
+            if (c7) c7.innerText = data.filter(d => d.statusGroup === 'Crítico (< 7 dias)').length;
+            if (c30) c30.innerText = data.filter(d => d.statusGroup === 'Atenção (< 30 dias)').length;
         }
 
         function toggleFilter(type, value) {
@@ -806,15 +836,15 @@
             const searchEl = document.getElementById('searchInput');
             const searchVal = searchEl ? searchEl.value.toLowerCase() : '';
             const emptyMsg = document.getElementById('emptyTableMsg');
-            if(!tbody) return;
+            if (!tbody) return;
             tbody.innerHTML = '';
 
             let tableData = data.filter(d => d.capa.toLowerCase().includes(searchVal) || d.assunto.toLowerCase().includes(searchVal) || d.responsavel.toLowerCase().includes(searchVal) || d.fase.toLowerCase().includes(searchVal) || d.localizacao.toLowerCase().includes(searchVal))
                              .sort((a, b) => (a.diasRestantes === null) ? 1 : (b.diasRestantes === null) ? -1 : a.diasRestantes - b.diasRestantes);
 
-            if (tableData.length === 0) { if(emptyMsg) emptyMsg.classList.remove('hidden'); } 
+            if (tableData.length === 0) { if (emptyMsg) emptyMsg.classList.remove('hidden'); } 
             else {
-                if(emptyMsg) emptyMsg.classList.add('hidden');
+                if (emptyMsg) emptyMsg.classList.add('hidden');
                 tableData.forEach(row => {
                     const tr = document.createElement('tr');
                     tr.className = 'hover:bg-slate-50/70 transition-colors';
@@ -850,7 +880,7 @@
             databases[currentDb].data = []; databases[currentDb].fileName = null; parsedData = [];
             clearAllFilters(); 
             const floatBtn = document.getElementById('floatingFilterBtn');
-            if(floatBtn) floatBtn.classList.add('hidden');
+            if (floatBtn) floatBtn.classList.add('hidden');
             
             if (typeof window.saveDatabaseToFirebase === "function" && oldName) {
                 window.saveDatabaseToFirebase(currentDb, [], null);
@@ -888,7 +918,7 @@
         }
 
         function renderCheckList(containerId, filterKey, items) {
-            const container = document.getElementById(containerId); if(!container) return;
+            const container = document.getElementById(containerId); if (!container) return;
             container.innerHTML = '';
             if (items.length === 0) { container.innerHTML = '<span class="text-slate-400 italic">Nenhum valor disponível</span>'; return; }
 
@@ -909,7 +939,7 @@
         function updateFloatingFilterBadge() {
             const activeCount = Object.values(activeFilters).reduce((sum, arr) => sum + arr.length, 0);
             const badge = document.getElementById('filterActiveBadge'), btn = document.getElementById('floatingFilterBtn');
-            if(!badge || !btn) return;
+            if (!badge || !btn) return;
             if (activeCount > 0) { badge.innerText = activeCount; badge.classList.remove('hidden'); btn.classList.add('ring-4', 'ring-[#FFCC00]/40'); } 
             else { badge.classList.add('hidden'); btn.classList.remove('ring-4', 'ring-[#FFCC00]/40'); }
 
@@ -933,11 +963,12 @@
         });
     </script>
 
+    <!-- Bloco de Integração do Firebase (Carregado como Módulo JavaScript) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Cole suas credenciais aqui abaixo!
+        // Substitua as credenciais de exemplo abaixo pelas do seu projeto real!
         const firebaseConfig = {
             apiKey: "SUA_API_KEY",
             authDomain: "SEU_AUTH_DOMAIN",
@@ -950,17 +981,33 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Expõe globalmente as funções do Firebase estruturadas de forma segura
         window.saveDatabaseToFirebase = async function(tabKey, data, fileName) {
             try {
+                // Serialização de segurança: Convertemos instâncias complexas de "Date" em timestamp "number" antes do setDoc.
+                // Isso evita erros de serialização no SDK do Firestore.
+                const cleanData = (data || []).map(item => {
+                    const copy = { ...item };
+                    if (copy.vencimento instanceof Date) {
+                        copy.vencimento = copy.vencimento.getTime(); 
+                    } else if (copy.vencimento && typeof copy.vencimento.toDate === 'function') {
+                        copy.vencimento = copy.vencimento.toDate().getTime();
+                    } else if (copy.vencimento && typeof copy.vencimento === 'string') {
+                        const parsedDate = new Date(copy.vencimento);
+                        copy.vencimento = !isNaN(parsedDate.getTime()) ? parsedDate.getTime() : null;
+                    }
+                    return copy;
+                });
+
                 await setDoc(doc(db, "painel_etq", tabKey), {
-                    data: data,
+                    data: cleanData,
                     fileName: fileName,
                     updatedAt: new Date().toISOString()
                 });
-                console.log(`Dados da base de [${tabKey}] salvos no Cloud Firestore.`);
+                console.log(`[Firebase] Dados da base [${tabKey}] salvos com sucesso no Cloud Firestore.`);
             } catch (error) {
-                console.error("Erro ao tentar salvar no Firebase:", error);
-                showMessage("Erro ao sincronizar dados com o banco de dados remoto.", "error");
+                console.error("[Firebase] Erro ao tentar salvar no Firebase:", error);
+                showMessage("Erro ao sincronizar dados com o Firebase. Verifique suas regras no console.", "error");
             }
         };
 
@@ -969,46 +1016,38 @@
             let loader = document.getElementById('loadingIndicator');
             if (loader) loader.classList.remove('hidden');
 
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
             for (const tab of tabs) {
                 try {
                     const docSnap = await getDoc(doc(db, "painel_etq", tab));
                     if (docSnap.exists()) {
                         const res = docSnap.data();
                         
-                        // CORREÇÃO CRÍTICA: Reconstrói dinamicamente os objetos Date E recalcula as propriedades necessárias pelos gráficos
-                        const processedData = (res.data || []).map(item => {
-                            if (item.vencimento) {
-                                const dueDate = new Date(item.vencimento);
-                                item.vencimento = dueDate;
-                                
-                                // Recalcula formatos textuais e dias restantes que o Firebase omitiu por salvar texto puro
-                                item.vencimentoFormatado = dueDate.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                                
-                                const utcDueDate = Date.UTC(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
-                                const utcToday = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-                                item.diasRestantes = Math.floor((utcDueDate - utcToday) / (1000 * 60 * 60 * 24));
-                                
-                                if (item.diasRestantes < 0) { item.statusGroup = 'Vencido'; item.statusColor = 'red'; }
-                                else if (item.diasRestantes <= 7) { item.statusGroup = 'Crítico (< 7 dias)'; item.statusColor = 'orange'; }
-                                else if (item.diasRestantes <= 30) { item.statusGroup = 'Atenção (< 30 dias)'; item.statusColor = 'yellow'; }
-                                else { item.statusGroup = 'No Prazo (> 30 dias)'; item.statusColor = 'green'; }
+                        // Desserialização: Convertemos o timestamp ou string de volta para um objeto Date nativo do JavaScript.
+                        const deserializedData = (res.data || []).map(item => {
+                            const copy = { ...item };
+                            if (copy.vencimento) {
+                                if (typeof copy.vencimento === 'number') {
+                                    copy.vencimento = new Date(copy.vencimento);
+                                } else if (typeof copy.vencimento === 'string') {
+                                    copy.vencimento = new Date(copy.vencimento);
+                                } else if (typeof copy.vencimento.toDate === 'function') {
+                                    copy.vencimento = copy.vencimento.toDate();
+                                } else if (copy.vencimento.seconds !== undefined) {
+                                    copy.vencimento = new Date(copy.vencimento.seconds * 1000);
+                                } else {
+                                    copy.vencimento = null;
+                                }
                             } else {
-                                item.vencimentoFormatado = 'Sem Data Limite';
-                                item.statusGroup = 'Sem Data';
-                                item.statusColor = 'gray';
-                                item.diasRestantes = null;
+                                copy.vencimento = null;
                             }
-                            return item;
+                            return copy;
                         });
 
-                        databases[tab].data = processedData;
+                        databases[tab].data = deserializedData;
                         databases[tab].fileName = res.fileName;
                     }
                 } catch (error) {
-                    console.error(`Falha ao recuperar registros da aba [${tab}]:`, error);
+                    console.error(`[Firebase] Falha ao recuperar registros da aba [${tab}]:`, error);
                 }
             }
 
@@ -1020,7 +1059,7 @@
             }
         };
 
-        // Dispara a sincronização automática de download
+        // Dispara a sincronização automática ao abrir a página
         document.addEventListener("DOMContentLoaded", () => {
             if (typeof window.loadDatabaseFromFirebase === "function") {
                 window.loadDatabaseFromFirebase();
@@ -1029,4 +1068,6 @@
     </script>
 </body>
 </html>
-</html>
+1. Substitua o conteúdo do seu arquivo por este código.
+2. Atualize o seu dicionário `firebaseConfig` com as chaves do seu projeto Firebase.
+3. Suba o arquivo para o seu repositório no GitHub Pages. Faça o upload de um Excel de teste em uma das abas e confira as atualizações em tempo real!

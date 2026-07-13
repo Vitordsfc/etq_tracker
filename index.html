@@ -960,7 +960,16 @@
                     const docSnap = await getDoc(doc(db, "painel_etq", tab));
                     if (docSnap.exists()) {
                         const res = docSnap.data();
-                        databases[tab].data = res.data;
+                        
+                        // CORREÇÃO AQUI: Garante que os textos de data voltem a ser objetos Date reais
+                        const processedData = (res.data || []).map(item => {
+                            if (item.vencimento && typeof item.vencimento === 'string') {
+                                item.vencimento = new Date(item.vencimento);
+                            }
+                            return item;
+                        });
+
+                        databases[tab].data = processedData;
                         databases[tab].fileName = res.fileName;
                     }
                 } catch (error) {
@@ -975,7 +984,6 @@
                 switchTab(currentDb);
             }
         };
-
         // Dispara a sincronização automática de download assim que a aplicação é montada
         document.addEventListener("DOMContentLoaded", () => {
             if (typeof window.loadDatabaseFromFirebase === "function") {

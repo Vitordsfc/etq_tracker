@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel de Tracking ETQ</title>
     
+    <!-- Bibliotecas externas essenciais -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -20,7 +22,7 @@
             border-color: #FFCC00 !important;
             background-color: #fffbeb !important;
         }
-        /* Barra de rolagem personalizada para a tabela e painéis */
+        /* Barra de rolagem personalizada premium para a tabela e painéis */
         .table-container::-webkit-scrollbar, .custom-scrollbar::-webkit-scrollbar {
             height: 6px;
             width: 6px;
@@ -37,13 +39,13 @@
             background: #94a3b8; 
         }
 
-        /* Regra Inteligente: Ícones com tom D40511, exceto status semântico e excel */
+        /* Regra de Estilo: Ícones com tom D40511, exceto status semântico e excel */
         i:not(.fa-circle-exclamation):not(.fa-bell):not(.fa-triangle-exclamation):not(.fa-circle-check):not(.fa-circle-question):not(.fa-file-excel) {
             color: #D40511 !important;
         }
     </style>
 </head>
-<body class="text-gray-800 relative min-h-screen">
+<body class="text-gray-800 relative min-h-screen pb-12">
 
     <nav class="bg-slate-900 border-b-4 border-[#FFCC00] text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -66,7 +68,7 @@
     <!-- Banner flutuante em caso de erro de regras no banco -->
     <div id="rulesWarningBanner" class="hidden bg-red-600 text-white text-xs py-2 px-4 text-center font-semibold animate-bounce flex items-center justify-center gap-2">
         <i class="fa-solid fa-triangle-exclamation text-lg text-white"></i> 
-        <span>O Firebase recusou o acesso devido a regras de segurança incorretas no Firestore. Siga o guia abaixo para liberar!</span>
+        <span>O Firebase recusou o acesso devido a regras de segurança incorretas no Firestore. Siga o guia de liberação no console!</span>
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
@@ -75,7 +77,7 @@
                 <i class="fa-solid fa-database mr-1"></i> Selecionar Base de Dados Ativa
             </p>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <button id="tab-capa" onclick="switchTab('capa')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
+                <button id="tab-capa" onclick="window.switchTab('capa')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0 group-hover:scale-105 transition-transform">
                             <i class="fa-solid fa-folder-open"></i>
@@ -88,7 +90,7 @@
                     <span id="badge-capa" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
                 </button>
 
-                <button id="tab-acoesCapa" onclick="switchTab('acoesCapa')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
+                <button id="tab-acoesCapa" onclick="window.switchTab('acoesCapa')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0 group-hover:scale-105 transition-transform">
                             <i class="fa-solid fa-list-check"></i>
@@ -101,7 +103,7 @@
                     <span id="badge-acoesCapa" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
                 </button>
 
-                <button id="tab-gmuds" onclick="switchTab('gmuds')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
+                <button id="tab-gmuds" onclick="window.switchTab('gmuds')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0 group-hover:scale-105 transition-transform">
                             <i class="fa-solid fa-code-branch"></i>
@@ -114,7 +116,7 @@
                     <span id="badge-gmuds" class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
                 </button>
 
-                <button id="tab-acoesGmud" onclick="switchTab('acoesGmud')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
+                <button id="tab-acoesGmud" onclick="window.switchTab('acoesGmud')" class="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200 group">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-bold shrink-0 group-hover:scale-105 transition-transform">
                             <i class="fa-solid fa-clipboard-list"></i>
@@ -132,13 +134,14 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
+        <!-- Upload Section -->
         <div id="uploadSection" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 mb-8 transition-all duration-300">
-            <div class="text-center">
+            <div class="text-center bg-slate-50/50 rounded-2xl p-6 border border-dashed border-slate-200">
                 <h2 id="uploadTitle" class="text-2xl font-bold text-slate-700 mb-2">Importar Folha de Cálculo de CAPAs</h2>
-                <p id="uploadDescription" class="text-slate-500 mb-6">Carregue o seu ficheiro Excel ou CSV de CAPAs para iniciar a análise detalhada.</p>
+                <p id="uploadDescription" class="text-slate-500 mb-6 text-sm">Carregue o seu ficheiro Excel ou CSV de CAPAs para iniciar a análise detalhada.</p>
                 
-                <div id="dropZone" class="border-2 border-dashed border-slate-300 rounded-2xl p-10 cursor-pointer hover:bg-slate-50 transition-colors flex flex-col items-center justify-center">
-                    <i class="fa-solid fa-cloud-arrow-up text-5xl mb-4"></i>
+                <div id="dropZone" class="border-2 border-dashed border-slate-300 rounded-2xl p-10 cursor-pointer bg-white hover:bg-slate-50 transition-colors flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-cloud-arrow-up text-5xl mb-4 text-[#D40511]"></i>
                     <p class="text-slate-600 font-medium text-lg mb-1">Arraste e largue o seu ficheiro aqui</p>
                     <p class="text-slate-400 text-sm mb-4">ou clique para procurar no seu computador (Formatos válidos: .xlsx, .xls, .csv)</p>
                     <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="hidden">
@@ -147,12 +150,13 @@
                     </button>
                 </div>
                 <div id="loadingIndicator" class="hidden mt-6">
-                    <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-2"></i>
-                    <p class="text-slate-600 font-medium">A processar dados e a sincronizar com a nuvem em tempo real...</p>
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-2 text-[#D40511]"></i>
+                    <p class="text-slate-600 font-medium text-sm">A processar dados e a sincronizar com a nuvem em tempo real...</p>
                 </div>
             </div>
         </div>
 
+        <!-- Dashboard Analytics Section -->
         <div id="dashboardSection" class="hidden opacity-0 transition-opacity duration-300">
             
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -160,7 +164,7 @@
                     <h2 id="dashboardTitle" class="text-2xl font-bold text-slate-800">Visão Geral</h2>
                     <p id="dashboardSubtitle" class="text-sm text-slate-500 mt-1"></p>
                 </div>
-                <button onclick="resetDashboard()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 px-4 rounded-xl transition-colors flex items-center gap-2 font-medium self-start sm:self-center">
+                <button onclick="window.resetDashboard()" class="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 px-4 rounded-xl transition-colors flex items-center gap-2 font-medium self-start sm:self-center border border-slate-200">
                     <i class="fa-solid fa-trash-can"></i> Limpar Esta Base de Dados
                 </button>
             </div>
@@ -168,32 +172,32 @@
             <!-- Filtros Ativos -->
             <div id="filterContainer" class="hidden mb-6 bg-amber-50 border border-[#FFCC00]/50 p-4 rounded-xl flex flex-col gap-3 shadow-sm">
                 <div class="flex items-center gap-2 text-slate-900 text-sm font-bold">
-                    <i class="fa-solid fa-filter"></i> Filtros Aplicados:
+                    <i class="fa-solid fa-filter"></i> Filtros Aplicados nesta Base:
                 </div>
                 <div id="filterBadges" class="flex flex-wrap gap-2"></div>
-                <button onclick="clearAllFilters()" class="text-xs text-[#D40511] hover:text-red-800 font-bold self-start underline cursor-pointer">
+                <button onclick="window.clearAllFilters()" class="text-xs text-[#D40511] hover:text-red-800 font-bold self-start underline cursor-pointer">
                     Limpar Todos os Filtros
                 </button>
             </div>
 
             <!-- KPIs de Controle -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div onclick="clearAllFilters()" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-[#FFCC00] cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all duration-200 group">
+                <div onclick="window.clearAllFilters()" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-[#FFCC00] cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all duration-200 group">
                     <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-slate-900 transition-colors">Total Geral</p>
                     <h3 class="text-3xl font-bold text-slate-800 group-hover:text-slate-900 transition-colors" id="kpiTotal">-</h3>
                     <p class="text-[11px] text-slate-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Ver todos os registos (Limpar filtros)</p>
                 </div>
-                <div onclick="toggleFilter('status', 'Vencido')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:bg-red-50 transition-all duration-200 group">
+                <div onclick="window.toggleFilter('status', 'Vencido')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-red-500 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:bg-red-50 transition-all duration-200 group">
                     <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-red-600 transition-colors">Vencidos</p>
                     <h3 class="text-3xl font-bold text-red-600 group-hover:text-red-700 transition-colors" id="kpiVencidos">-</h3>
                     <p class="text-[11px] text-red-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Alternar filtro atrasados</p>
                 </div>
-                <div onclick="toggleFilter('status', 'Crítico (< 7 dias)')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-orange-500 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:bg-orange-50 transition-all duration-200 group">
+                <div onclick="window.toggleFilter('status', 'Crítico (< 7 dias)')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-orange-500 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:bg-orange-50 transition-all duration-200 group">
                     <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-orange-600 transition-colors">Crítico (< 7 Dias)</p>
                     <h3 class="text-3xl font-bold text-orange-500 group-hover:text-orange-600 transition-colors" id="kpi7Dias">-</h3>
                     <p class="text-[11px] text-orange-400 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Alternar filtro urgência elevada</p>
                 </div>
-                <div onclick="toggleFilter('status', 'Atenção (< 30 dias)')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:bg-yellow-50 transition-all duration-200 group">
+                <div onclick="window.toggleFilter('status', 'Atenção (< 30 dias)')" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-yellow-500 cursor-pointer hover:shadow-md hover:-translate-y-1 hover:bg-yellow-50 transition-all duration-200 group">
                     <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-yellow-600 transition-colors">Atenção (< 30 Dias)</p>
                     <h3 class="text-3xl font-bold text-yellow-500 group-hover:text-yellow-600 transition-colors" id="kpi30Dias">-</h3>
                     <p class="text-[11px] text-yellow-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Alternar filtro atenção moderada</p>
@@ -203,20 +207,20 @@
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
                     <h3 class="text-lg font-bold text-slate-700 mb-4 text-center">Distribuição de Volume por Data Limite</h3>
-                    <div class="relative flex-grow min-h-[250px] w-full">
+                    <div class="relative flex-grow min-h-[300px] w-full">
                         <canvas id="chartStatus"></canvas>
                     </div>
                 </div>
 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
                     <h3 class="text-lg font-bold text-slate-700 mb-4">Volume por Integrante / Estado</h3>
-                    <div class="relative flex-grow min-h-[300px] w-full">
+                    <!-- Contentor com transição e altura automática para evitar sobreposição ou esmagamento -->
+                    <div class="relative flex-grow min-h-[300px] w-full transition-all duration-300">
                         <canvas id="chartResponsavel"></canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- Tabela Principal de Detalhamento -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-12">
                 <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
                     <div>
@@ -224,7 +228,7 @@
                         <p class="text-xs text-slate-400 mt-0.5">Ordenado por prioridade de urgência dos prazos de entrega</p>
                     </div>
                     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                        <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+                        <button onclick="window.exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
                             <i class="fa-solid fa-file-excel text-lg text-white"></i> Exportar Excel
                         </button>
                         <div class="relative w-full sm:w-64">
@@ -258,7 +262,8 @@
         </div>
     </main>
 
-    <button id="floatingFilterBtn" onclick="toggleFilterDrawer(true)" class="hidden fixed bottom-6 right-6 z-30 bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 rounded-full p-4 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 group">
+    <!-- FLOATING FILTER DRAWER TRIGGER -->
+    <button id="floatingFilterBtn" onclick="window.toggleFilterDrawer(true)" class="hidden fixed bottom-6 right-6 z-30 bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 rounded-full p-4 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 group">
         <span class="relative flex h-5 w-5 items-center justify-center">
             <i class="fa-solid fa-filter text-lg !text-slate-900"></i>
             <span id="filterActiveBadge" class="absolute -top-2.5 -right-2.5 bg-[#D40511] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center hidden">0</span>
@@ -268,7 +273,7 @@
         </span>
     </button>
 
-    <div id="filterDrawerBackdrop" onclick="toggleFilterDrawer(false)" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"></div>
+    <div id="filterDrawerBackdrop" onclick="window.toggleFilterDrawer(false)" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"></div>
 
     <div id="filterDrawer" class="fixed top-0 right-0 h-full w-80 md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out border-l border-slate-200 flex flex-col">
         <div class="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -276,7 +281,7 @@
                 <i class="fa-solid fa-sliders text-lg"></i>
                 <h3 class="font-bold text-slate-800 text-lg">Filtros Avançados</h3>
             </div>
-            <button onclick="toggleFilterDrawer(false)" class="text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors">
+            <button onclick="window.toggleFilterDrawer(false)" class="text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-slate-100 transition-colors">
                 <i class="fa-solid fa-xmark text-lg"></i>
             </button>
         </div>
@@ -286,25 +291,25 @@
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Responsável Atribuído</label>
-                    <button onclick="clearFilterGroup('responsavel')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
+                    <button onclick="window.clearFilterGroup('responsavel')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
                 </div>
-                <input type="text" id="searchFilterResponsavel" placeholder="Procurar responsável..." oninput="filterChecklist('responsavel', this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-[#FFCC00] bg-white">
+                <input type="text" id="searchFilterResponsavel" placeholder="Procurar responsável..." oninput="window.filterChecklist('responsavel', this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-[#FFCC00] bg-white">
                 <div id="filterContainerResponsavel" class="border border-slate-200 rounded-xl p-3 max-h-36 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
             </div>
 
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Localização</label>
-                    <button onclick="clearFilterGroup('localizacao')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
+                    <button onclick="window.clearFilterGroup('localizacao')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
                 </div>
-                <input type="text" id="searchFilterLocalizacao" placeholder="Procurar localização..." oninput="filterChecklist('localizacao', this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-[#FFCC00] bg-white">
+                <input type="text" id="searchFilterLocalizacao" placeholder="Procurar localização..." oninput="window.filterChecklist('localizacao', this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-[#FFCC00] bg-white">
                 <div id="filterContainerLocalizacao" class="border border-slate-200 rounded-xl p-3 max-h-36 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
             </div>
 
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Estado do Prazo</label>
-                    <button onclick="clearFilterGroup('status')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
+                    <button onclick="window.clearFilterGroup('status')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
                 </div>
                 <div id="filterContainerStatus" class="border border-slate-200 rounded-xl p-3 max-h-28 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
             </div>
@@ -312,73 +317,97 @@
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Fase / Situação</label>
-                    <button onclick="clearFilterGroup('fase')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
+                    <button onclick="window.clearFilterGroup('fase')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
                 </div>
-                <input type="text" id="searchFilterFase" placeholder="Procurar fase..." oninput="filterChecklist('fase', this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-[#FFCC00] bg-white">
+                <input type="text" id="searchFilterFase" placeholder="Procurar fase..." oninput="window.filterChecklist('fase', this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-[#FFCC00] bg-white">
                 <div id="filterContainerFase" class="border border-slate-200 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
             </div>
 
             <div>
                 <div class="flex items-center justify-between mb-1.5">
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Data Limite</label>
-                    <button onclick="clearFilterGroup('vencimento')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
+                    <button onclick="window.clearFilterGroup('vencimento')" class="text-[10px] text-[#D40511] hover:text-red-700 font-bold transition-colors">Limpar</button>
                 </div>
-                <input type="text" id="searchFilterVencimento" placeholder="Procurar data..." oninput="filterChecklist('vencimento', this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-[#FFCC00] bg-white">
+                <input type="text" id="searchFilterVencimento" placeholder="Procurar data..." oninput="window.filterChecklist('vencimento', this.value)" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-1.5 mb-2 focus:outline-none focus:ring-1 focus:ring-[#FFCC00] bg-white">
                 <div id="filterContainerVencimento" class="border border-slate-200 rounded-xl p-3 max-h-32 overflow-y-auto space-y-1.5 bg-white text-xs custom-scrollbar"></div>
             </div>
         </div>
 
         <div class="p-6 border-t border-slate-100 bg-slate-50 flex gap-3">
-            <button onclick="clearAllFilters(); toggleFilterDrawer(false);" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
+            <button onclick="window.clearAllFilters(); window.toggleFilterDrawer(false);" class="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors">
                 Limpar Tudo
             </button>
-            <button onclick="toggleFilterDrawer(false)" class="flex-1 py-2.5 bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 rounded-xl text-sm font-bold transition-colors shadow-md shadow-amber-100">
+            <button onclick="window.toggleFilterDrawer(false)" class="flex-1 py-2.5 bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 rounded-xl text-sm font-bold transition-colors shadow-md shadow-amber-100">
                 Fechar
             </button>
         </div>
     </div>
 
+    <!-- MAIN CONTROLLER LOGIC -->
     <script>
-        const ptMonths = {
+        window.ptMonths = {
             'jan': 0, 'fev': 1, 'mar': 2, 'abr': 3, 'mai': 4, 'jun': 5,
             'jul': 6, 'ago': 7, 'set': 8, 'out': 9, 'nov': 10, 'dez': 11
         };
 
-        const dbConfigs = {
+        window.dbConfigs = {
             capa: { name: 'CAPAs', labelId: 'Número do CAPA / Local', desc: 'Carregue o seu ficheiro Excel ou CSV de CAPAs.' },
             acoesCapa: { name: 'Ações de CAPA', labelId: 'Número da Ação / Local', desc: 'Carregue o seu ficheiro contendo as Ações das suas CAPAs.' },
             gmuds: { name: 'GMUDs', labelId: 'Número da GMUD / Local', desc: 'Carregue o seu ficheiro de Gestão de Mudanças (GMUDs).' },
             acoesGmud: { name: 'Ações de GMUD', labelId: 'Número da Ação / Local', desc: 'Carregue o seu ficheiro contendo as Ações associadas às GMUDs.' }
         };
 
-        let currentDb = 'capa'; 
-        let databases = {
+        window.currentDb = 'capa'; 
+        window.databases = {
             capa: { name: 'CAPAs', data: [], fileName: null },
             acoesCapa: { name: 'Ações de CAPA', data: [], fileName: null },
             gmuds: { name: 'GMUDs', data: [], fileName: null },
             acoesGmud: { name: 'Ações de GMUD', data: [], fileName: null }
         };
 
-        let parsedData = []; 
-        let charts = {};
-        let activeFilters = {
-            vencimento: [],
-            responsavel: [],
-            status: [],
-            fase: [],
-            localizacao: []
+        window.parsedData = []; 
+        window.charts = {};
+
+        // Persistência de filtros entre abas
+        window.tabFilters = {
+            capa: { vencimento: [], responsavel: [], status: [], fase: [], localizacao: [] },
+            acoesCapa: { vencimento: [], responsavel: [], status: [], fase: [], localizacao: [] },
+            gmuds: { vencimento: [], responsavel: [], status: [], fase: [], localizacao: [] },
+            acoesGmud: { vencimento: [], responsavel: [], status: [], fase: [], localizacao: [] }
         };
 
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const uploadSection = document.getElementById('uploadSection');
-        const dashboardSection = document.getElementById('dashboardSection');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const searchInput = document.getElementById('searchInput');
+        window.activeFilters = window.tabFilters['capa'];
 
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
+        let dropZone, fileInput, uploadSection, dashboardSection, loadingIndicator, searchInput;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            dropZone = document.getElementById('dropZone');
+            fileInput = document.getElementById('fileInput');
+            uploadSection = document.getElementById('uploadSection');
+            dashboardSection = document.getElementById('dashboardSection');
+            loadingIndicator = document.getElementById('loadingIndicator');
+            searchInput = document.getElementById('searchInput');
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+
+            dropZone.addEventListener('drop', handleDrop, false);
+            fileInput.addEventListener('change', handleFileSelect, false);
+            searchInput.addEventListener('input', () => {
+                if (window.parsedData.length > 0) window.applyFilters();
+            });
+
+            window.switchTab('capa');
         });
 
         function preventDefaults(e) {
@@ -386,114 +415,8 @@
             e.stopPropagation();
         }
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
-        });
-
         function highlight(e) { dropZone.classList.add('drag-active'); }
         function unhighlight(e) { dropZone.classList.remove('drag-active'); }
-
-        dropZone.addEventListener('drop', handleDrop, false);
-        fileInput.addEventListener('change', handleFileSelect, false);
-        searchInput.addEventListener('input', () => {
-            if (parsedData.length > 0) applyFilters();
-        });
-
-        function switchTab(key) {
-            currentDb = key;
-            updateTabsUI();
-            searchInput.value = '';
-            
-            const uploadTitle = document.getElementById('uploadTitle');
-            const uploadDescription = document.getElementById('uploadDescription');
-            const thColId = document.getElementById('thColId');
-            const thColRef = document.getElementById('thColRef');
-
-            uploadTitle.innerText = `Importar Folha de Cálculo de ${dbConfigs[key].name}`;
-            uploadDescription.innerHTML = dbConfigs[key].desc;
-            if (thColId) thColId.innerText = dbConfigs[key].labelId;
-
-            if (thColRef) {
-                if (key === 'acoesGmud') {
-                    thColRef.innerText = 'Ref. Principal';
-                    thColRef.classList.remove('hidden');
-                } else if (key === 'acoesCapa') {
-                    thColRef.innerText = 'CAPA Principal';
-                    thColRef.classList.remove('hidden');
-                } else {
-                    thColRef.classList.add('hidden');
-                }
-            }
-
-            parsedData = databases[key].data;
-
-            if (parsedData && parsedData.length > 0) {
-                uploadSection.classList.add('hidden');
-                dashboardSection.classList.remove('hidden');
-                document.getElementById('floatingFilterBtn').classList.remove('hidden');
-                
-                document.getElementById('dashboardTitle').innerText = `Visão Geral - ${dbConfigs[key].name}`;
-                document.getElementById('dashboardSubtitle').innerHTML = `Ficheiro ativo: <span class="font-bold text-[#D40511]">${databases[key].fileName}</span>`;
-                
-                dashboardSection.classList.remove('opacity-0');
-
-                activeFilters = { vencimento: [], responsavel: [], status: [], fase: [], localizacao: [] };
-                
-                ['searchFilterResponsavel', 'searchFilterLocalizacao', 'searchFilterFase', 'searchFilterVencimento'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-
-                setTimeout(() => {
-                    applyFilters(); 
-                }, 50);
-            } else {
-                dashboardSection.classList.add('opacity-0');
-                document.getElementById('floatingFilterBtn').classList.add('hidden');
-                setTimeout(() => {
-                    dashboardSection.classList.add('hidden');
-                    uploadSection.classList.remove('hidden');
-                }, 200);
-            }
-        }
-
-        function updateTabsUI() {
-            const keys = ['capa', 'acoesCapa', 'gmuds', 'acoesGmud'];
-            keys.forEach(key => {
-                const btn = document.getElementById(`tab-${key}`);
-                if (!btn) return;
-                const badge = document.getElementById(`badge-${key}`);
-                const fileNameEl = document.getElementById(`fileName-${key}`);
-                
-                const isLoaded = databases[key].data && databases[key].data.length > 0;
-                
-                if (isLoaded) {
-                    if (badge) badge.className = "w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200 animate-pulse border border-white";
-                    if (fileNameEl) {
-                        fileNameEl.innerText = databases[key].fileName;
-                        fileNameEl.className = "text-[10px] text-slate-500 font-semibold block max-w-[140px] truncate mt-0.5";
-                    }
-                } else {
-                    if (badge) badge.className = "w-2.5 h-2.5 rounded-full bg-slate-300";
-                    if (fileNameEl) {
-                        fileNameEl.innerText = "Sem ficheiro";
-                        fileNameEl.className = "text-[10px] text-slate-400 font-normal italic block mt-0.5";
-                    }
-                }
-                
-                if (key === currentDb) {
-                    btn.className = "flex items-center justify-between p-4 rounded-xl border-2 border-[#FFCC00] bg-[#FFCC00]/10 shadow-sm text-left transition-all duration-200 ring-4 ring-amber-100";
-                    btn.querySelector('.shrink-0').className = "w-10 h-10 rounded-lg bg-[#FFCC00] text-slate-900 flex items-center justify-center text-lg font-bold shrink-0 shadow-md shadow-amber-200 transition-all";
-                } else {
-                    btn.className = "flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200";
-                    btn.querySelector('.shrink-0').className = "w-10 h-10 rounded-lg bg-amber-50 text-[#D40511] flex items-center justify-center text-lg font-bold shrink-0 transition-all";
-                }
-            });
-        }
 
         function handleDrop(e) {
             const dt = e.dataTransfer;
@@ -507,7 +430,7 @@
 
         function handleFiles(file) {
             if (!file.name.match(/\.(xlsx|xls|csv)$/i)) {
-                showMessage("Por favor, selecione um ficheiro Excel ou CSV válido.", "error");
+                window.showMessage("Por favor, selecione um ficheiro Excel ou CSV válido.", "error");
                 return;
             }
 
@@ -526,7 +449,7 @@
                     processData(rawData, file.name);
                 } catch (error) {
                     console.error(error);
-                    showMessage("Erro ao ler a folha de cálculo. Verifique se o ficheiro não está corrompido.", "error");
+                    window.showMessage("Erro ao ler a folha de cálculo. Verifique se o ficheiro não está corrompido.", "error");
                     loadingIndicator.classList.add('hidden');
                     dropZone.classList.remove('opacity-50', 'pointer-events-none');
                 }
@@ -534,9 +457,101 @@
             reader.readAsArrayBuffer(file);
         }
 
+        window.switchTab = function(key) {
+            window.currentDb = key;
+            window.updateTabsUI();
+            if (searchInput) searchInput.value = '';
+            
+            const uploadTitle = document.getElementById('uploadTitle');
+            const uploadDescription = document.getElementById('uploadDescription');
+            const thColId = document.getElementById('thColId');
+            const thColRef = document.getElementById('thColRef');
+
+            if (uploadTitle) uploadTitle.innerText = `Importar Folha de Cálculo de ${window.dbConfigs[key].name}`;
+            if (uploadDescription) uploadDescription.innerHTML = window.dbConfigs[key].desc;
+            if (thColId) thColId.innerText = window.dbConfigs[key].labelId;
+
+            if (thColRef) {
+                if (key === 'acoesGmud') {
+                    thColRef.innerText = 'Ref. Principal';
+                    thColRef.classList.remove('hidden');
+                } else if (key === 'acoesCapa') {
+                    thColRef.innerText = 'CAPA Principal';
+                    thColRef.classList.remove('hidden');
+                } else {
+                    thColRef.classList.add('hidden');
+                }
+            }
+
+            window.parsedData = window.databases[key].data || [];
+            window.activeFilters = window.tabFilters[key];
+
+            if (window.parsedData && window.parsedData.length > 0) {
+                if (uploadSection) uploadSection.classList.add('hidden');
+                if (dashboardSection) {
+                    dashboardSection.classList.remove('hidden');
+                    dashboardSection.classList.remove('opacity-0');
+                }
+                document.getElementById('floatingFilterBtn').classList.remove('hidden');
+                
+                document.getElementById('dashboardTitle').innerText = `Visão Geral - ${window.dbConfigs[key].name}`;
+                document.getElementById('dashboardSubtitle').innerHTML = `Ficheiro ativo: <span class="font-bold text-[#D40511]">${window.databases[key].fileName}</span>`;
+                
+                ['searchFilterResponsavel', 'searchFilterLocalizacao', 'searchFilterFase', 'searchFilterVencimento'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+
+                setTimeout(() => {
+                    window.applyFilters(); 
+                }, 50);
+            } else {
+                if (dashboardSection) dashboardSection.classList.add('opacity-0');
+                document.getElementById('floatingFilterBtn').classList.add('hidden');
+                setTimeout(() => {
+                    if (dashboardSection) dashboardSection.classList.add('hidden');
+                    if (uploadSection) uploadSection.classList.remove('hidden');
+                }, 200);
+            }
+        };
+
+        window.updateTabsUI = function() {
+            const keys = ['capa', 'acoesCapa', 'gmuds', 'acoesGmud'];
+            keys.forEach(key => {
+                const btn = document.getElementById(`tab-${key}`);
+                if (!btn) return;
+                const badge = document.getElementById(`badge-${key}`);
+                const fileNameEl = document.getElementById(`fileName-${key}`);
+                
+                const isLoaded = window.databases[key].data && window.databases[key].data.length > 0;
+                
+                if (isLoaded) {
+                    if (badge) badge.className = "w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-200 animate-pulse border border-white";
+                    if (fileNameEl) {
+                        fileNameEl.innerText = window.databases[key].fileName;
+                        fileNameEl.className = "text-[10px] text-slate-500 font-semibold block max-w-[140px] truncate mt-0.5";
+                    }
+                } else {
+                    if (badge) badge.className = "w-2.5 h-2.5 rounded-full bg-slate-300";
+                    if (fileNameEl) {
+                        fileNameEl.innerText = "Sem ficheiro";
+                        fileNameEl.className = "text-[10px] text-slate-400 font-normal italic block mt-0.5";
+                    }
+                }
+                
+                if (key === window.currentDb) {
+                    btn.className = "flex items-center justify-between p-4 rounded-xl border-2 border-[#FFCC00] bg-[#FFCC00]/10 shadow-sm text-left transition-all duration-200 ring-4 ring-amber-100";
+                    btn.querySelector('.shrink-0').className = "w-10 h-10 rounded-lg bg-[#FFCC00] text-slate-900 flex items-center justify-center text-lg font-bold shrink-0 shadow-md shadow-amber-200 transition-all";
+                } else {
+                    btn.className = "flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/70 text-left transition-all duration-200";
+                    btn.querySelector('.shrink-0').className = "w-10 h-10 rounded-lg bg-amber-50 text-[#D40511] flex items-center justify-center text-lg font-bold shrink-0 transition-all";
+                }
+            });
+        };
+
         function processData(rawData, fileName) {
             if (!rawData || rawData.length === 0) {
-                showMessage("A folha de cálculo está vazia.", "warning");
+                window.showMessage("A folha de cálculo está vazia.", "warning");
                 loadingIndicator.classList.add('hidden');
                 dropZone.classList.remove('opacity-50', 'pointer-events-none');
                 return;
@@ -583,7 +598,7 @@
             const colCapa = getColName(headers, ['numero', 'capa', 'codigo', 'gmud', 'mudança', 'id', 'solicitação', 'num', 'identificador', 'ação', 'acao']);
             
             let colAssunto;
-            if (currentDb === 'acoesGmud') {
+            if (window.currentDb === 'acoesGmud') {
                 colAssunto = getColName(headers, ['tema de actividade', 'tema de atividade', 'tema de acção', 'tema de acao', 'tema', 'assunto', 'atividade', 'titulo', 'descricao', 'texto', 'detalhe', 'resumo', 'nome', 'descrição']);
             } else {
                 colAssunto = getColName(headers, ['assunto', 'atividade', 'titulo', 'descricao', 'texto', 'detalhe', 'resumo', 'nome', 'descrição']);
@@ -599,7 +614,7 @@
 
             if (!colCapa && !colResp && !colVenc && !colFase) {
                 const colunasAchadas = headers.filter(h => h !== "").slice(0, 5).join(", ") + "...";
-                showMessage(`Não foi possível mapear as colunas corretas automaticamente. Encontrado na linha de cabeçalho: [${colunasAchadas}].`, "error");
+                window.showMessage(`Não foi possível mapear as colunas corretas automaticamente. Encontrado na linha de cabeçalho: [${colunasAchadas}].`, "error");
                 loadingIndicator.classList.add('hidden');
                 dropZone.classList.remove('opacity-50', 'pointer-events-none');
                 return;
@@ -632,10 +647,10 @@
                         const strClean = rawDate.trim().toLowerCase();
                         const ptMatch = strClean.match(/^(\d{1,2})[\/\-\s]+([a-z]{3})[\/\-\s]+(\d{2,4})/);
 
-                        if (ptMatch && ptMonths[ptMatch[2]] !== undefined) {
+                        if (ptMatch && window.ptMonths[ptMatch[2]] !== undefined) {
                             let year = parseInt(ptMatch[3]);
                             if (year < 100) year += 2000;
-                            dueDate = new Date(year, ptMonths[ptMatch[2]], parseInt(ptMatch[1]));
+                            dueDate = new Date(year, window.ptMonths[ptMatch[2]], parseInt(ptMatch[1]));
                             validDate = true;
                         } else {
                             const parts = strClean.split(/[\/\-\sT]/);
@@ -675,9 +690,9 @@
                 let cleanResp = rawResp.split('(')[0].trim();
 
                 let refPrincipalVal = '-';
-                if (currentDb === 'acoesGmud' && colRefPrincipal) {
+                if (window.currentDb === 'acoesGmud' && colRefPrincipal) {
                     refPrincipalVal = row[colRefPrincipal] ? String(row[colRefPrincipal]).trim() : '-';
-                } else if (currentDb === 'acoesCapa' && colCapaPrincipal) {
+                } else if (window.currentDb === 'acoesCapa' && colCapaPrincipal) {
                     refPrincipalVal = row[colCapaPrincipal] ? String(row[colCapaPrincipal]).trim() : '-';
                 }
 
@@ -696,7 +711,6 @@
                 });
             }
 
-            // Filtrando fora linhas de encerramento
             tempParsed = tempParsed.filter(item => {
                 const isNotEmpty = (item.capa !== 'N/D' && item.capa !== 'undefined' && item.capa !== '') ||
                                    (item.responsavel !== 'Não Atribuído' && item.responsavel !== 'undefined' && item.responsavel !== '');
@@ -706,24 +720,24 @@
             });
 
             if (tempParsed.length === 0) {
-                showMessage("Não foram detetados dados válidos compatíveis (ou todos os registos estão fechados).", "warning");
+                window.showMessage("Não foram detetados dados válidos compatíveis (ou todos os registos estão fechados).", "warning");
                 loadingIndicator.classList.add('hidden');
                 dropZone.classList.remove('opacity-50', 'pointer-events-none');
                 return;
             }
 
-            // Envia para salvamento no Firebase Firestore
             if (typeof window.saveDatabaseToFirebase === "function") {
-                window.saveDatabaseToFirebase(currentDb, tempParsed, fileName);
+                window.saveDatabaseToFirebase(window.currentDb, tempParsed, fileName);
             }
         }
 
-        function updateDashboardWidgets(dataToRender) {
-            const data = dataToRender || parsedData;
+        window.updateDashboardWidgets = function(dataToRender) {
+            const data = dataToRender || window.parsedData;
             renderKPIs(data);
 
             const colors = { 'Vencido': '#ef4444', 'Crítico (< 7 dias)': '#f97316', 'Atenção (< 30 dias)': '#eab308', 'No Prazo (> 30 dias)': '#22c55e', 'Sem Data': '#94a3b8' };
 
+            // 1. Gráfico de Status por Data Limite
             const dateGroups = {};
             data.forEach(d => {
                 const label = d.vencimentoFormatado;
@@ -737,35 +751,79 @@
                 labels: sortedDateLabels,
                 datasets: [{ label: 'Qtd. de Ocorrências', data: dateCountsData, backgroundColor: '#FFCC00', borderRadius: 6 }]
             }, {
-                plugins: { legend: { display: false } }, 
+                layout: { padding: { top: 24 } },
+                plugins: { 
+                    legend: { display: false },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        color: '#475569',
+                        font: { weight: 'bold', size: 11, family: "'Inter', sans-serif" },
+                        formatter: function(value) { return value > 0 ? value : ''; }
+                    }
+                }, 
                 maintainAspectRatio: false,
                 scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-                onClick: (e, elements) => { if (elements.length > 0) toggleFilter('vencimento', sortedDateLabels[elements[0].index]); },
+                onClick: (e, elements) => { if (elements.length > 0) window.toggleFilter('vencimento', sortedDateLabels[elements[0].index]); },
                 onHover: (e, elements) => { e.native.target.style.cursor = elements[0] ? 'pointer' : 'default'; }
-            });
+            }, typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : []);
 
+            // 2. Gráfico Horizontal de Responsáveis (Com Altura Dinâmica Inteligente)
             const respData = {};
             data.forEach(d => {
-                if (!respData[d.responsavel]) { respData[d.responsavel] = { 'Vencido': 0, 'Crítico (< 7 dias)': 0, 'Atenção (< 30 dias)': 0, 'No Prazo (> 30 dias)': 0, 'Sem Data': 0 }; }
+                if (!respData[d.responsavel]) { 
+                    respData[d.responsavel] = { 'Vencido': 0, 'Crítico (< 7 dias)': 0, 'Atenção (< 30 dias)': 0, 'No Prazo (> 30 dias)': 0, 'Sem Data': 0 }; 
+                }
                 respData[d.responsavel][d.statusGroup]++;
             });
-            const respLabels = Object.keys(respData).sort((a, b) => ((respData[b]['Vencido'] * 100) + (respData[b]['Crítico (< 7 dias)'] * 10)) - ((respData[a]['Vencido'] * 100) + (respData[a]['Crítico (< 7 dias)'] * 10)));
-            const datasetsResp = Object.keys(colors).map(status => ({ label: status, data: respLabels.map(r => respData[r][status]), backgroundColor: colors[status] })).filter(ds => ds.data.some(v => v > 0));
+
+            const respLabels = Object.keys(respData).sort((a, b) => {
+                const scoreB = (respData[b]['Vencido'] * 100) + (respData[b]['Crítico (< 7 dias)'] * 10) + (respData[b]['Atenção (< 30 dias)']);
+                const scoreA = (respData[a]['Vencido'] * 100) + (respData[a]['Crítico (< 7 dias)'] * 10) + (respData[a]['Atenção (< 30 dias)']);
+                return scoreB - scoreA;
+            });
+
+            // Ajuste Dinâmico do Contentor do Gráfico para Evitar Compressão/Esmagamento das Barras
+            const chartCanvas = document.getElementById('chartResponsavel');
+            if (chartCanvas && chartCanvas.parentElement) {
+                const calculatedHeight = Math.max(300, respLabels.length * 38);
+                chartCanvas.parentElement.style.height = `${calculatedHeight}px`;
+            }
+
+            const datasetsResp = Object.keys(colors).map(status => ({
+                label: status, 
+                data: respLabels.map(r => respData[r][status]), 
+                backgroundColor: colors[status] 
+            })).filter(ds => ds.data.some(v => v > 0));
 
             createChart('chartResponsavel', 'bar', { labels: respLabels, datasets: datasetsResp }, {
                 indexAxis: 'y', 
-                scales: { x: { stacked: true }, y: { stacked: true } },
-                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }, 
+                scales: { 
+                    x: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }, 
+                    y: { stacked: true } 
+                },
+                plugins: { 
+                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                    datalabels: {
+                        color: '#ffffff',
+                        anchor: 'center',
+                        align: 'center',
+                        textShadowColor: 'rgba(0, 0, 0, 0.6)',
+                        textShadowBlur: 4,
+                        font: { weight: 'bold', size: 10, family: "'Inter', sans-serif" },
+                        formatter: function(value) { return value > 0 ? value : ''; }
+                    }
+                }, 
                 maintainAspectRatio: false,
                 onClick: (e, elements) => {
                     if (elements.length > 0) {
-                        toggleFilter('responsavel', respLabels[elements[0].index]);
-                        toggleFilter('status', datasetsResp[elements[0].datasetIndex].label);
+                        window.toggleFilter('responsavel', respLabels[elements[0].index]);
+                        window.toggleFilter('status', datasetsResp[elements[0].datasetIndex].label);
                     }
                 },
                 onHover: (e, elements) => { e.native.target.style.cursor = elements[0] ? 'pointer' : 'default'; }
-            });
-        }
+            }, typeof ChartDataLabels !== 'undefined' ? [ChartDataLabels] : []);
+        };
 
         function renderKPIs(data) {
             document.getElementById('kpiTotal').innerText = data.length;
@@ -774,52 +832,54 @@
             document.getElementById('kpi30Dias').innerText = data.filter(d => d.statusGroup === 'Atenção (< 30 dias)').length;
         }
 
-        function toggleFilter(type, value) {
-            if (value === null) { activeFilters[type] = []; } 
+        window.toggleFilter = function(type, value) {
+            if (value === null) { window.activeFilters[type] = []; } 
             else {
-                const idx = activeFilters[type].indexOf(value);
-                if (idx > -1) activeFilters[type].splice(idx, 1);
-                else activeFilters[type].push(value);
+                const idx = window.activeFilters[type].indexOf(value);
+                if (idx > -1) window.activeFilters[type].splice(idx, 1);
+                else window.activeFilters[type].push(value);
             }
-            applyFilters();
-        }
+            window.applyFilters();
+        };
 
-        function clearFilterGroup(type) {
-            activeFilters[type] = [];
-            applyFilters();
-            populateFilterChecklists();
+        window.clearFilterGroup = function(type) {
+            window.activeFilters[type] = [];
+            window.applyFilters();
+            window.populateFilterChecklists();
             const searchInput = document.getElementById('searchFilter' + type.charAt(0).toUpperCase() + type.slice(1));
             if (searchInput) searchInput.value = '';
-        }
+        };
 
-        function clearAllFilters() {
-            activeFilters = { vencimento: [], responsavel: [], status: [], fase: [], localizacao: [] };
+        window.clearAllFilters = function() {
+            Object.keys(window.activeFilters).forEach(key => {
+                window.activeFilters[key] = [];
+            });
             ['searchFilterResponsavel', 'searchFilterLocalizacao', 'searchFilterFase', 'searchFilterVencimento'].forEach(id => {
                 const el = document.getElementById(id); if (el) el.value = '';
             });
-            applyFilters();
-        }
+            window.applyFilters();
+        };
 
-        function applyFilters() {
-            let filtered = parsedData.filter(item => {
-                if (activeFilters.vencimento.length > 0 && !activeFilters.vencimento.includes(item.vencimentoFormatado)) return false;
-                if (activeFilters.responsavel.length > 0 && !activeFilters.responsavel.includes(item.responsavel)) return false;
-                if (activeFilters.status.length > 0 && !activeFilters.status.includes(item.statusGroup)) return false;
-                if (activeFilters.fase.length > 0 && !activeFilters.fase.includes(item.fase)) return false;
-                if (activeFilters.localizacao.length > 0 && !activeFilters.localizacao.includes(item.localizacao)) return false;
+        window.applyFilters = function() {
+            let filtered = window.parsedData.filter(item => {
+                if (window.activeFilters.vencimento.length > 0 && !window.activeFilters.vencimento.includes(item.vencimentoFormatado)) return false;
+                if (window.activeFilters.responsavel.length > 0 && !window.activeFilters.responsavel.includes(item.responsavel)) return false;
+                if (window.activeFilters.status.length > 0 && !window.activeFilters.status.includes(item.statusGroup)) return false;
+                if (window.activeFilters.fase.length > 0 && !window.activeFilters.fase.includes(item.fase)) return false;
+                if (window.activeFilters.localizacao.length > 0 && !window.activeFilters.localizacao.includes(item.localizacao)) return false;
                 return true;
             });
 
             renderTable(filtered);
             renderFilterUI();
-            updateDashboardWidgets(filtered);
+            window.updateDashboardWidgets(filtered);
             updateFloatingFilterBadge();
-        }
+        };
 
         function renderFilterUI() {
             const container = document.getElementById('filterContainer');
             const badgesContainer = document.getElementById('filterBadges');
-            const totalFilters = Object.values(activeFilters).reduce((sum, arr) => sum + arr.length, 0);
+            const totalFilters = Object.values(window.activeFilters).reduce((sum, arr) => sum + arr.length, 0);
 
             if (totalFilters === 0) { container.classList.add('hidden'); } 
             else {
@@ -827,12 +887,12 @@
                 badgesContainer.innerHTML = '';
                 const labelNames = { vencimento: 'Data', responsavel: 'Resp.', status: 'Estado', fase: 'Fase', localizacao: 'Local.' };
 
-                Object.keys(activeFilters).forEach(key => {
-                    activeFilters[key].forEach(val => {
+                Object.keys(window.activeFilters).forEach(key => {
+                    window.activeFilters[key].forEach(val => {
                         const badge = document.createElement('span');
                         badge.className = 'bg-white border border-[#FFCC00] text-slate-900 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 shadow-sm';
                         badge.innerHTML = `<span class="text-slate-400 font-normal">${labelNames[key]}:</span> ${val}
-                            <button onclick="toggleFilter('${key}', '${val}')" class="text-[#D40511] hover:text-red-700 ml-1 w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50"><i class="fa-solid fa-xmark text-xs"></i></button>`;
+                            <button onclick="window.toggleFilter('${key}', '${val}')" class="text-[#D40511] hover:text-red-700 ml-1 w-5 h-5 flex items-center justify-center rounded-full hover:bg-red-50"><i class="fa-solid fa-xmark text-xs"></i></button>`;
                         badgesContainer.appendChild(badge);
                     });
                 });
@@ -861,7 +921,7 @@
                     if (row.statusColor === 'green') { badgeClass = 'bg-green-100 text-green-800'; icon = 'fa-circle-check'; }
 
                     let refTd = '';
-                    if (currentDb === 'acoesGmud' || currentDb === 'acoesCapa') {
+                    if (window.currentDb === 'acoesGmud' || window.currentDb === 'acoesCapa') {
                         refTd = `<td class="py-3.5 px-6 font-semibold text-slate-700">${row.refPrincipal || '-'}</td>`;
                     }
 
@@ -879,37 +939,38 @@
             }
         }
 
-        function createChart(canvasId, type, data, options) {
+        function createChart(canvasId, type, data, options, plugins = []) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
-            if (charts[canvasId]) charts[canvasId].destroy();
+            if (window.charts[canvasId]) window.charts[canvasId].destroy();
             
-            charts[canvasId] = new Chart(ctx, { 
+            window.charts[canvasId] = new Chart(ctx, { 
                 type: type, 
                 data: data, 
                 options: { 
                     responsive: true, 
                     resizeDelay: 50,
                     ...options 
-                } 
+                },
+                plugins: plugins
             });
         }
 
-        function exportToExcel() {
-            if (!parsedData || parsedData.length === 0) {
-                showMessage("Não existem dados disponíveis para exportar.", "warning");
+        window.exportToExcel = function() {
+            if (!window.parsedData || window.parsedData.length === 0) {
+                window.showMessage("Não existem dados disponíveis para exportar.", "warning");
                 return;
             }
             
             const searchVal = document.getElementById('searchInput').value.toLowerCase();
             
-            let filtered = parsedData.filter(item => {
-                if (activeFilters.vencimento.length > 0 && !activeFilters.vencimento.includes(item.vencimentoFormatado)) return false;
-                if (activeFilters.responsavel.length > 0 && !activeFilters.responsavel.includes(item.responsavel)) return false;
-                if (activeFilters.status.length > 0 && !activeFilters.status.includes(item.statusGroup)) return false;
-                if (activeFilters.fase.length > 0 && !activeFilters.fase.includes(item.fase)) return false;
-                if (activeFilters.localizacao.length > 0 && !activeFilters.localizacao.includes(item.localizacao)) return false;
+            let filtered = window.parsedData.filter(item => {
+                if (window.activeFilters.vencimento.length > 0 && !window.activeFilters.vencimento.includes(item.vencimentoFormatado)) return false;
+                if (window.activeFilters.responsavel.length > 0 && !window.activeFilters.responsavel.includes(item.responsavel)) return false;
+                if (window.activeFilters.status.length > 0 && !window.activeFilters.status.includes(item.statusGroup)) return false;
+                if (window.activeFilters.fase.length > 0 && !window.activeFilters.fase.includes(item.fase)) return false;
+                if (window.activeFilters.localizacao.length > 0 && !window.activeFilters.localizacao.includes(item.localizacao)) return false;
                 return true;
             });
 
@@ -917,7 +978,7 @@
                              .sort((a, b) => (a.diasRestantes === null) ? 1 : (b.diasRestantes === null) ? -1 : a.diasRestantes - b.diasRestantes);
 
             if (tableData.length === 0) {
-                showMessage("Nenhum dado selecionado com os filtros atuais.", "warning");
+                window.showMessage("Nenhum dado selecionado com os filtros atuais.", "warning");
                 return;
             }
 
@@ -931,18 +992,18 @@
                     "Localização": row.localizacao,
                 };
                 
-                if (currentDb === 'acoesGmud') {
+                if (window.currentDb === 'acoesGmud') {
                     item["Número da Ação / Local"] = row.capa;
                     item["Ref. Principal"] = row.refPrincipal;
                     item["Tema de Actividade"] = row.assunto;
-                } else if (currentDb === 'acoesCapa') {
+                } else if (window.currentDb === 'acoesCapa') {
                     item["Número da Ação / Local"] = row.capa;
                     item["CAPA Principal"] = row.refPrincipal;
                     item["Descrição / Assunto"] = row.assunto;
-                } else if (currentDb === 'capa') {
+                } else if (window.currentDb === 'capa') {
                     item["Número do CAPA / Local"] = row.capa;
                     item["Descrição / Assunto"] = row.assunto;
-                } else if (currentDb === 'gmuds') {
+                } else if (window.currentDb === 'gmuds') {
                     item["Número da GMUD / Local"] = row.capa;
                     item["Descrição / Assunto"] = row.assunto;
                 }
@@ -951,12 +1012,12 @@
             });
 
             const orderKeys = [];
-            if (currentDb === 'acoesGmud') {
+            if (window.currentDb === 'acoesGmud') {
                 orderKeys.push("Número da Ação / Local", "Ref. Principal", "Tema de Actividade", "Responsável Atribuído", "Fase / Situação", "Estado do Prazo", "Data Limite", "Dias Restantes", "Localização");
-            } else if (currentDb === 'acoesCapa') {
+            } else if (window.currentDb === 'acoesCapa') {
                 orderKeys.push("Número da Ação / Local", "CAPA Principal", "Descrição / Assunto", "Responsável Atribuído", "Fase / Situação", "Estado do Prazo", "Data Limite", "Dias Restantes", "Localização");
             } else {
-                const label = currentDb === 'capa' ? "Número do CAPA / Local" : "Número da GMUD / Local";
+                const label = window.currentDb === 'capa' ? "Número do CAPA / Local" : "Número da GMUD / Local";
                 orderKeys.push(label, "Descrição / Assunto", "Responsável Atribuído", "Fase / Situação", "Estado do Prazo", "Data Limite", "Dias Restantes", "Localização");
             }
 
@@ -983,29 +1044,29 @@
 
             const dbNames = { capa: 'CAPAs', acoesCapa: 'Acoes_CAPA', gmuds: 'GMUDs', acoesGmud: 'Acoes_GMUD' };
             const timestamp = new Date().toISOString().slice(0,10);
-            const filename = `Export_${dbNames[currentDb] || 'Dados'}_${timestamp}.xlsx`;
+            const filename = `Export_${dbNames[window.currentDb] || 'Dados'}_${timestamp}.xlsx`;
             XLSX.writeFile(workbook, filename);
-        }
+        };
 
-        function resetDashboard() {
+        window.resetDashboard = function() {
             if (typeof window.deleteDatabaseFromFirebase === "function") {
-                window.deleteDatabaseFromFirebase(currentDb);
+                window.deleteDatabaseFromFirebase(window.currentDb);
             }
-        }
+        };
 
-        function toggleFilterDrawer(open) {
+        window.toggleFilterDrawer = function(open) {
             const drawer = document.getElementById('filterDrawer'), backdrop = document.getElementById('filterDrawerBackdrop');
             if (open) {
-                populateFilterChecklists(); drawer.classList.remove('translate-x-full'); backdrop.classList.remove('hidden');
+                window.populateFilterChecklists(); drawer.classList.remove('translate-x-full'); backdrop.classList.remove('hidden');
                 setTimeout(() => { backdrop.classList.remove('opacity-0'); backdrop.classList.add('opacity-100'); }, 10);
             } else {
                 drawer.classList.add('translate-x-full'); backdrop.classList.remove('opacity-100'); backdrop.classList.add('opacity-0');
                 setTimeout(() => backdrop.classList.add('hidden'), 300);
             }
-        }
+        };
 
-        function populateFilterChecklists() {
-            const fullData = databases[currentDb].data; if (!fullData || fullData.length === 0) return;
+        window.populateFilterChecklists = function() {
+            const fullData = window.databases[window.currentDb].data; if (!fullData || fullData.length === 0) return;
             const responsaveis = [...new Set(fullData.map(d => d.responsavel))].filter(v => v).sort();
             const localizacoes = [...new Set(fullData.map(d => d.localizacao))].filter(v => v).sort();
             const estados = [...new Set(fullData.map(d => d.statusGroup))].filter(v => v).sort();
@@ -1019,7 +1080,7 @@
             renderCheckList('filterContainerStatus', 'status', estados);
             renderCheckList('filterContainerFase', 'fase', fases);
             renderCheckList('filterContainerVencimento', 'vencimento', sortedDateFormats);
-        }
+        };
 
         function renderCheckList(containerId, filterKey, items) {
             const container = document.getElementById(containerId); container.innerHTML = '';
@@ -1028,19 +1089,19 @@
             items.forEach(item => {
                 const label = document.createElement('label');
                 label.className = 'flex items-center gap-2.5 cursor-pointer py-1 px-1.5 hover:bg-slate-50 rounded-lg transition-colors group text-slate-700';
-                label.innerHTML = `<input type="checkbox" value="${item}" ${activeFilters[filterKey].includes(item) ? 'checked' : ''} onchange="toggleFilter('${filterKey}', this.value)" class="rounded text-[#D40511] focus:ring-[#FFCC00] border-slate-300 w-4 h-4 transition-all"><span class="truncate font-medium select-none group-hover:text-slate-900">${item}</span>`;
+                label.innerHTML = `<input type="checkbox" value="${item}" ${window.activeFilters[filterKey].includes(item) ? 'checked' : ''} onchange="window.toggleFilter('${filterKey}', this.value)" class="rounded text-[#D40511] focus:ring-[#FFCC00] border-slate-300 w-4 h-4 transition-all"><span class="truncate font-medium select-none group-hover:text-slate-900">${item}</span>`;
                 container.appendChild(label);
             });
         }
 
-        function filterChecklist(key, text) {
+        window.filterChecklist = function(key, text) {
             const container = document.getElementById('filterContainer' + key.charAt(0).toUpperCase() + key.slice(1)); if (!container) return;
             const items = container.querySelectorAll('label'), searchVal = text.toLowerCase();
             items.forEach(item => { if (item.querySelector('span').innerText.toLowerCase().includes(searchVal)) item.classList.remove('hidden'); else item.classList.add('hidden'); });
-        }
+        };
 
         function updateFloatingFilterBadge() {
-            const activeCount = Object.values(activeFilters).reduce((sum, arr) => sum + arr.length, 0);
+            const activeCount = Object.values(window.activeFilters).reduce((sum, arr) => sum + arr.length, 0);
             const badge = document.getElementById('filterActiveBadge'), btn = document.getElementById('floatingFilterBtn');
             if (activeCount > 0) { badge.innerText = activeCount; badge.classList.remove('hidden'); btn.classList.add('ring-4', 'ring-[#FFCC00]/40'); } 
             else { badge.classList.add('hidden'); btn.classList.remove('ring-4', 'ring-[#FFCC00]/40'); }
@@ -1048,23 +1109,20 @@
             const filterContainers = { responsavel: 'filterContainerResponsavel', localizacao: 'filterContainerLocalizacao', status: 'filterContainerStatus', fase: 'filterContainerFase', vencimento: 'filterContainerVencimento' };
             Object.keys(filterContainers).forEach(key => {
                 const container = document.getElementById(filterContainers[key]);
-                if (container) container.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = activeFilters[key].includes(cb.value); });
+                if (container) container.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = window.activeFilters[key].includes(cb.value); });
             });
         }
 
-        function showMessage(msg, type) {
+        window.showMessage = function(msg, type) {
             const modal = document.createElement('div');
             modal.className = 'fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity';
             const icon = type === 'error' ? '<i class="fa-solid fa-triangle-exclamation text-red-500 text-4xl mb-4"></i>' : type === 'warning' ? '<i class="fa-solid fa-circle-exclamation text-yellow-500 text-4xl mb-4"></i>' : '<i class="fa-solid fa-circle-info text-4xl mb-4"></i>';
             modal.innerHTML = `<div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 text-center shadow-xl transform transition-all scale-100">${icon}<p class="text-slate-800 font-bold text-lg mb-6">${msg}</p><button onclick="this.closest('.fixed').remove()" class="bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 font-bold py-2.5 px-6 rounded-xl transition-colors w-full">Compreendido</button></div>`;
             document.body.appendChild(modal);
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            switchTab('capa');
-        });
+        };
     </script>
 
+    <!-- FIREBASE MODULE LOGIC AND REALTIME INTERACTION -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -1095,19 +1153,19 @@
             if (status === 'connecting') {
                 badge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse";
                 badge.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Conectando...`;
-                warningBanner.classList.add('hidden');
+                if (warningBanner) warningBanner.classList.add('hidden');
             } else if (status === 'authenticated') {
                 badge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 animate-pulse";
                 badge.innerHTML = `<i class="fa-solid fa-user-shield"></i> Autenticado`;
-                warningBanner.classList.add('hidden');
+                if (warningBanner) warningBanner.classList.add('hidden');
             } else if (status === 'synced') {
                 badge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
                 badge.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Sincronizado`;
-                warningBanner.classList.add('hidden');
+                if (warningBanner) warningBanner.classList.add('hidden');
             } else if (status === 'error') {
                 badge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30";
                 badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erro de Permissão`;
-                warningBanner.classList.remove('hidden');
+                if (warningBanner) warningBanner.classList.remove('hidden');
             }
         }
 
@@ -1128,7 +1186,6 @@
             }
         }
 
-        // Algoritmo de descompressão rápida da estrutura do documento
         function decompressData(compressedArray) {
             const today = new Date();
             today.setHours(0,0,0,0);
@@ -1186,7 +1243,6 @@
                     p: item.refPrincipal || '-'
                 }));
 
-                // Caminho simplificado ideal de acordo com a regra de segurança configurada
                 const docRef = doc(db, 'painel_etq', tabKey);
                 await setDoc(docRef, {
                     compressedData: compressed,
@@ -1198,11 +1254,11 @@
             } catch (error) {
                 console.error("Error trying to save to Cloud Firestore:", error);
                 updateSyncStatus('error');
-                // Exibe o erro exato para ajudar o administrador a diagnosticar
-                showMessage(`Erro de Sincronização. Detalhes: ${error.message || error.code || error}`, "error");
+                window.showMessage(`Erro de Sincronização. Detalhes: ${error.message || error.code || error}`, "error");
             } finally {
                 if (loader) loader.classList.add('hidden');
-                dropZone.classList.remove('opacity-50', 'pointer-events-none');
+                const dropZoneEl = document.getElementById('dropZone');
+                if (dropZoneEl) dropZoneEl.classList.remove('opacity-50', 'pointer-events-none');
             }
         };
 
@@ -1243,41 +1299,46 @@
                         if (docSnap.exists()) {
                             const res = docSnap.data();
                             if (res.compressedData && res.compressedData.length > 0) {
-                                databases[tab].data = decompressData(res.compressedData);
-                                databases[tab].fileName = res.fileName;
+                                window.databases[tab].data = decompressData(res.compressedData);
+                                window.databases[tab].fileName = res.fileName;
                             } else {
-                                databases[tab].data = [];
-                                databases[tab].fileName = null;
+                                window.databases[tab].data = [];
+                                window.databases[tab].fileName = null;
                             }
                         } else {
-                            databases[tab].data = [];
-                            databases[tab].fileName = null;
+                            window.databases[tab].data = [];
+                            window.databases[tab].fileName = null;
                         }
 
                         // Atualiza a interface gráfica se for a aba ativa
-                        if (tab === currentDb) {
-                            parsedData = databases[currentDb].data;
-                            if (parsedData && parsedData.length > 0) {
-                                uploadSection.classList.add('hidden');
-                                dashboardSection.classList.remove('hidden');
+                        if (tab === window.currentDb) {
+                            window.parsedData = window.databases[window.currentDb].data;
+                            const uploadSectionEl = document.getElementById('uploadSection');
+                            const dashboardSectionEl = document.getElementById('dashboardSection');
+                            
+                            if (window.parsedData && window.parsedData.length > 0) {
+                                if (uploadSectionEl) uploadSectionEl.classList.add('hidden');
+                                if (dashboardSectionEl) {
+                                    dashboardSectionEl.classList.remove('hidden');
+                                    dashboardSectionEl.classList.remove('opacity-0');
+                                }
                                 document.getElementById('floatingFilterBtn').classList.remove('hidden');
-                                document.getElementById('dashboardTitle').innerText = `Visão Geral - ${dbConfigs[currentDb].name}`;
-                                document.getElementById('dashboardSubtitle').innerHTML = `Ficheiro ativo: <span class="font-bold text-[#D40511]">${databases[currentDb].fileName}</span>`;
+                                document.getElementById('dashboardTitle').innerText = `Visão Geral - ${window.dbConfigs[window.currentDb].name}`;
+                                document.getElementById('dashboardSubtitle').innerHTML = `Ficheiro ativo: <span class="font-bold text-[#D40511]">${window.databases[window.currentDb].fileName}</span>`;
                                 
-                                dashboardSection.classList.remove('opacity-0');
                                 setTimeout(() => {
-                                    applyFilters();
+                                    window.applyFilters();
                                 }, 50);
                             } else {
-                                dashboardSection.classList.add('opacity-0');
+                                if (dashboardSectionEl) dashboardSectionEl.classList.add('opacity-0');
                                 document.getElementById('floatingFilterBtn').classList.add('hidden');
                                 setTimeout(() => {
-                                    dashboardSection.classList.add('hidden');
-                                    uploadSection.classList.remove('hidden');
+                                    if (dashboardSectionEl) dashboardSectionEl.classList.add('hidden');
+                                    if (uploadSectionEl) uploadSectionEl.classList.remove('hidden');
                                 }, 200);
                             }
                         }
-                        updateTabsUI();
+                        window.updateTabsUI();
                         updateSyncStatus('synced');
                     }, (error) => {
                         console.error(`Firebase Sync error on tab [${tab}]:`, error);
@@ -1292,7 +1353,6 @@
             }
         }
 
-        // Inicializador principal de escuta de rede
         document.addEventListener("DOMContentLoaded", () => {
             setupRealtimeSync();
         });

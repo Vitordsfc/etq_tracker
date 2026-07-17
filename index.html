@@ -513,7 +513,7 @@
             dropZone.classList.add('opacity-50', 'pointer-events-none');
 
             const reader = new FileReader();
-            reader.onload = function (e) {
+            reader.onload = async function (e) {
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array', cellDates: true });
@@ -521,7 +521,13 @@
                     const worksheet = workbook.Sheets[firstSheetName];
                     const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
 
-                    processData(rawData, file.name);
+                    // Processa e exibe de imediato na interface (Otimista)
+                    processData(rawData, file.name, currentDb);
+
+                    // SALVA O ARQUIVO BINÁRIO REAL NO FIREBASE STORAGE
+                    if (typeof window.saveExcelToFirebase === "function") {
+                        await window.saveExcelToFirebase(currentDb, file);
+                    }
                 } catch (error) {
                     console.error(error);
                     showMessage("Erro ao ler a folha de cálculo. Verifique se o ficheiro não está corrompido.", "error");
@@ -534,7 +540,8 @@
             reader.readAsArrayBuffer(file);
         }
 
-        function processData(rawData, fileName) {
+        function processData(rawData, fileName, targetDbKey) {
+            const dbKey = targetDbKey || currentDb;
             if (!rawData || rawData.length === 0) {
                 showMessage("A folha de cálculo está vazia.", "warning");
                 return;
@@ -581,7 +588,7 @@
             const colCapa = getColName(headers, ['numero', 'capa', 'codigo', 'gmud', 'mudança', 'id', 'solicitação', 'num', 'identificador', 'ação', 'acao']);
             
             let colAssunto;
-            if (currentDb === 'acoesGmud') {
+            if (dbKey === 'acoesGmud') {
                 colAssunto = getColName(headers, ['tema de actividade', 'tema de atividade', 'tema de acção', 'tema de acao', 'tema', 'assunto', 'atividade', 'titulo', 'descricao', 'texto', 'detalhe', 'resumo', 'nome', 'descrição']);
             } else {
                 colAssunto = getColName(headers, ['assunto', 'atividade', 'titulo', 'descricao', 'texto', 'detalhe', 'resumo', 'nome', 'descrição']);
@@ -671,9 +678,9 @@
                 let cleanResp = rawResp.split('(')[0].trim();
 
                 let refPrincipalVal = '-';
-                if (currentDb === 'acoesGmud' && colRefPrincipal) {
+                if (dbKey === 'acoesGmud' && colRefPrincipal) {
                     refPrincipalVal = row[colRefPrincipal] ? String(row[colRefPrincipal]).trim() : '-';
-                } else if (currentDb === 'acoesCapa' && colCapaPrincipal) {
+                } else if (dbKey === 'acoesCapa' && colCapaPrincipal) {
                     refPrincipalVal = row[colCapaPrincipal] ? String(row[colCapaPrincipal]).trim() : '-';
                 }
 
@@ -706,15 +713,12 @@
                 return;
             }
 
-            databases[currentDb].data = tempParsed;
-            databases[currentDb].fileName = fileName;
+            databases[dbKey].data = tempParsed;
+            databases[dbKey].fileName = fileName;
 
-            // INTEGRAÇÃO REAL: Salva automaticamente as modificações no Firebase Cloud Firestore
-            if (typeof window.saveDatabaseToFirebase === "function") {
-                window.saveDatabaseToFirebase(currentDb, tempParsed, fileName);
+            if (dbKey === currentDb) {
+                switchTab(currentDb);
             }
-
-            switchTab(currentDb);
         }
 
         function updateDashboardWidgets(dataToRender) {
@@ -886,7 +890,6 @@
             const ctx = canvas.getContext('2d');
             if (charts[canvasId]) charts[canvasId].destroy();
             
-            // Instancia o novo gráfico apenas se o container não possuir dimensões zeradas
             charts[canvasId] = new Chart(ctx, { 
                 type: type, 
                 data: data, 
@@ -997,8 +1000,8 @@
             clearAllFilters(); 
             document.getElementById('floatingFilterBtn').classList.add('hidden');
             
-            if (typeof window.saveDatabaseToFirebase === "function" && oldName) {
-                window.saveDatabaseToFirebase(currentDb, [], null);
+            if (typeof window.deleteExcelFromFirebase === "function" && oldName) {
+                window.deleteExcelFromFirebase(currentDb);
             }
             dashboardSection.classList.add('opacity-0');
             setTimeout(() => { 
@@ -1074,7 +1077,6 @@
             document.body.appendChild(modal);
         }
 
-        // Inicialização primária padrão
         document.addEventListener("DOMContentLoaded", () => {
             switchTab('capa');
         });
@@ -1082,10 +1084,11 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // Configuração original do Firebase
+        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyB0WY5jdkBayS2KvKV9BejwUd1dl0Hl_us",
             authDomain: "etq-tracker.firebaseapp.com",
@@ -1097,6 +1100,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const storage = getStorage(app);
         const auth = getAuth(app);
 
         let authReadyPromise = null;
@@ -1119,37 +1123,74 @@
             return authReadyPromise;
         }
 
-        // Salvar base de dados
-        window.saveDatabaseToFirebase = async function(tabKey, data, fileName) {
+        window.saveExcelToFirebase = async function(tabKey, file) {
+            let loader = document.getElementById('loadingIndicator');
+            if (loader) loader.classList.remove('hidden');
             try {
                 const user = await ensureAuth();
                 if (!user) return;
                 
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const fileExtension = file.name.split('.').pop();
+                const storagePath = `excel_files/${appId}/${tabKey}.${fileExtension}`;
                 
-                // Gravação do Firestore seguindo o padrão de caminhos seguros da Regra 1
+                // 1. Enviar o arquivo binário direto ao Storage (Suporta arquivos grandes)
+                const storageRef = ref(storage, storagePath);
+                await uploadBytes(storageRef, file);
+                console.log("Ficheiro Excel enviado com sucesso para o Storage:", storagePath);
+                
+                // 2. Grava metadados mínimos de referência no Firestore
                 const docRef = doc(db, "artifacts", appId, "public", "data", tabKey);
                 await setDoc(docRef, {
-                    data: data,
-                    fileName: fileName,
+                    fileName: file.name,
+                    fileExtension: fileExtension,
+                    storagePath: storagePath,
                     updatedAt: new Date().toISOString()
                 });
-                console.log(`Base de [${tabKey}] salva e sincronizada na nuvem com sucesso.`);
+                console.log(`Metadados salvos no Firestore para [${tabKey}].`);
             } catch (error) {
-                console.error("Erro ao sincronizar com o Firestore:", error);
+                console.error("Erro ao sincronizar arquivo com o Firebase:", error);
+                showMessage("Erro ao salvar o arquivo na nuvem. Verifique a ligação e tente novamente.", "error");
+            } finally {
+                if (loader) loader.classList.add('hidden');
             }
         };
 
-        // Carregar base de dados
+        window.deleteExcelFromFirebase = async function(tabKey) {
+            try {
+                const user = await ensureAuth();
+                if (!user) return;
+                
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const docRef = doc(db, "artifacts", appId, "public", "data", tabKey);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const metadata = docSnap.data();
+                    if (metadata.storagePath) {
+                        const storageRef = ref(storage, metadata.storagePath);
+                        await deleteObject(storageRef).catch(err => console.warn("Ficheiro no Storage já inexistente ou removido.", err));
+                    }
+                    await deleteDoc(docRef);
+                    console.log(`Dados e ficheiro de [${tabKey}] limpos com sucesso.`);
+                }
+            } catch (error) {
+                console.error("Erro ao tentar remover do Firebase:", error);
+            }
+        };
+
         window.loadDatabaseFromFirebase = async function() {
             const tabs = ['capa', 'acoesCapa', 'gmuds', 'acoesGmud'];
             let loader = document.getElementById('loadingIndicator');
-            if (loader) loader.classList.remove('hidden');
+            if (loader) {
+                loader.classList.remove('hidden');
+                const textEl = loader.querySelector('p');
+                if (textEl) textEl.innerText = "A descarregar as bases de dados ativas da nuvem...";
+            }
 
             try {
-                // Aguarda o login concluir antes de realizar consultas
                 const user = await ensureAuth();
-                if (!user) throw new Error("Usuário não autenticado");
+                if (!user) throw new Error("Utilizador não autenticado no Firebase");
 
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
@@ -1157,19 +1198,40 @@
                     try {
                         const docRef = doc(db, "artifacts", appId, "public", "data", tab);
                         const docSnap = await getDoc(docRef);
+                        
                         if (docSnap.exists()) {
-                            const res = docSnap.data();
-                            databases[tab].data = res.data;
-                            databases[tab].fileName = res.fileName;
+                            const metadata = docSnap.data();
+                            if (metadata.storagePath) {
+                                // 1. Buscar URL pública temporária para o binário do Storage
+                                const storageRef = ref(storage, metadata.storagePath);
+                                const downloadUrl = await getDownloadURL(storageRef);
+                                
+                                // 2. Efetuar o download do arquivo original como ArrayBuffer
+                                const response = await fetch(downloadUrl);
+                                const arrayBuffer = await response.arrayBuffer();
+                                
+                                // 3. Parsear binários na memória do cliente com XLSX.js (Evita gargalo de tráfego de rede)
+                                const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array', cellDates: true });
+                                const firstSheetName = workbook.SheetNames[0];
+                                const worksheet = workbook.Sheets[firstSheetName];
+                                const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+
+                                // Processa e monta a estrutura correspondente da aba
+                                processData(rawData, metadata.fileName, tab);
+                            }
                         }
                     } catch (error) {
-                        console.error(`Falha ao recuperar registros da aba [${tab}]:`, error);
+                        console.error(`Falha ao recuperar registo binário da aba [${tab}]:`, error);
                     }
                 }
             } catch (e) {
-                console.warn("Sincronização desabilitada ou indisponível temporariamente na nuvem. Modo local ativo.", e);
+                console.warn("Modo offline ativo ou sincronização desabilitada temporariamente.", e);
             } finally {
-                if (loader) loader.classList.add('hidden');
+                if (loader) {
+                    loader.classList.add('hidden');
+                    const textEl = loader.querySelector('p');
+                    if (textEl) textEl.innerText = "Sincronizando dados com a nuvem e processando relatórios...";
+                }
                 updateTabsUI();
                 
                 if (databases[currentDb].data && databases[currentDb].data.length > 0) {
@@ -1178,7 +1240,7 @@
             }
         };
 
-        // Dispara o download automático no carregamento da janela de forma resiliente
+        // Dispara o download automático no carregamento da janela
         window.onload = function() {
             window.loadDatabaseFromFirebase();
         };

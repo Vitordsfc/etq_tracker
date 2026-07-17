@@ -52,12 +52,22 @@
                     <i class="fa-solid fa-chart-pie text-2xl"></i>
                     <span class="font-bold text-xl tracking-tight">/ETQTracker <span class="text-[#FFCC00]">Analytics</span></span>
                 </div>
-                <div>
-                    <span class="text-sm text-amber-200 font-medium">Prevenção de Vencimentos & Gestão Multi-Base</span>
+                <div class="flex items-center gap-3">
+                    <span class="hidden md:inline text-sm text-amber-200 font-medium mr-2">Prevenção de Vencimentos & Gestão Multi-Base</span>
+                    <!-- Status do Firebase Firestore -->
+                    <span id="syncStatusBadge" class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i> Conectando...
+                    </span>
                 </div>
             </div>
         </div>
     </nav>
+
+    <!-- Banner flutuante em caso de erro de regras no banco -->
+    <div id="rulesWarningBanner" class="hidden bg-red-600 text-white text-xs py-2 px-4 text-center font-semibold animate-bounce flex items-center justify-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation text-lg text-white"></i> 
+        <span>O Firebase recusou o acesso devido a regras de segurança incorretas no Firestore. Siga o guia abaixo para liberar!</span>
+    </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
@@ -122,7 +132,6 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
-        <!-- Área de Upload de Arquivos -->
         <div id="uploadSection" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 mb-8 transition-all duration-300">
             <div class="text-center">
                 <h2 id="uploadTitle" class="text-2xl font-bold text-slate-700 mb-2">Importar Folha de Cálculo de CAPAs</h2>
@@ -144,7 +153,6 @@
             </div>
         </div>
 
-        <!-- Seção do Dashboard principal -->
         <div id="dashboardSection" class="hidden opacity-0 transition-opacity duration-300">
             
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -250,7 +258,6 @@
         </div>
     </main>
 
-    <!-- Botão Flutuante de Filtros -->
     <button id="floatingFilterBtn" onclick="toggleFilterDrawer(true)" class="hidden fixed bottom-6 right-6 z-30 bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 rounded-full p-4 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 group">
         <span class="relative flex h-5 w-5 items-center justify-center">
             <i class="fa-solid fa-filter text-lg !text-slate-900"></i>
@@ -261,7 +268,6 @@
         </span>
     </button>
 
-    <!-- Drawer de Filtros Laterais -->
     <div id="filterDrawerBackdrop" onclick="toggleFilterDrawer(false)" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"></div>
 
     <div id="filterDrawer" class="fixed top-0 right-0 h-full w-80 md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out border-l border-slate-200 flex flex-col">
@@ -275,6 +281,7 @@
             </button>
         </div>
 
+        <!-- Formulários de Seleção de Filtros por Checklist -->
         <div class="p-6 flex-grow overflow-y-auto space-y-5 custom-scrollbar bg-slate-50/35">
             <div>
                 <div class="flex items-center justify-between mb-1.5">
@@ -441,7 +448,6 @@
                     if (el) el.value = '';
                 });
 
-                // Execução do render com pequeno delay para que o Chart.js calcule as dimensões do container
                 setTimeout(() => {
                     applyFilters(); 
                 }, 50);
@@ -690,6 +696,7 @@
                 });
             }
 
+            // Filtrando fora linhas de encerramento
             tempParsed = tempParsed.filter(item => {
                 const isNotEmpty = (item.capa !== 'N/D' && item.capa !== 'undefined' && item.capa !== '') ||
                                    (item.responsavel !== 'Não Atribuído' && item.responsavel !== 'undefined' && item.responsavel !== '');
@@ -705,7 +712,7 @@
                 return;
             }
 
-            // SALVA DIRETO NO FIREBASE CLOUD FIRESTORE COM SEGURANÇA E PARSE COMPACTADO
+            // Envia para salvamento no Firebase Firestore
             if (typeof window.saveDatabaseToFirebase === "function") {
                 window.saveDatabaseToFirebase(currentDb, tempParsed, fileName);
             }
@@ -1060,9 +1067,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Credenciais do Projeto Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyB0WY5jdkBayS2KvKV9BejwUd1dl0Hl_us",
             authDomain: "etq-tracker.firebaseapp.com",
@@ -1076,30 +1084,51 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         let currentUser = null;
-        let isSyncing = false;
+
+        // Atualização visual do status de sincronização
+        function updateSyncStatus(status, type = 'info') {
+            const badge = document.getElementById('syncStatusBadge');
+            const warningBanner = document.getElementById('rulesWarningBanner');
+            if (!badge) return;
+
+            if (status === 'connecting') {
+                badge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse";
+                badge.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Conectando...`;
+                warningBanner.classList.add('hidden');
+            } else if (status === 'authenticated') {
+                badge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30 animate-pulse";
+                badge.innerHTML = `<i class="fa-solid fa-user-shield"></i> Autenticado`;
+                warningBanner.classList.add('hidden');
+            } else if (status === 'synced') {
+                badge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+                badge.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> Sincronizado`;
+                warningBanner.classList.add('hidden');
+            } else if (status === 'error') {
+                badge.className = "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30";
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Erro de Permissão`;
+                warningBanner.classList.remove('hidden');
+            }
+        }
 
         // Autenticação robusta para acesso ao Cloud Firestore
         async function authenticate() {
             if (currentUser) return currentUser;
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    const cred = await signInWithCustomToken(auth, __initial_auth_token);
-                    currentUser = cred.user;
-                } else {
-                    const cred = await signInAnonymously(auth);
-                    currentUser = cred.user;
-                }
+                updateSyncStatus('connecting');
+                const cred = await signInAnonymously(auth);
+                currentUser = cred.user;
                 console.log("Firebase Authenticated successfully:", currentUser.uid);
+                updateSyncStatus('authenticated');
                 return currentUser;
             } catch (error) {
                 console.error("Firebase Authentication error:", error);
+                updateSyncStatus('error');
                 throw error;
             }
         }
 
-        // Algoritmo de descompressão rápida de estrutura de dados
+        // Algoritmo de descompressão rápida da estrutura do documento
         function decompressData(compressedArray) {
             const today = new Date();
             today.setHours(0,0,0,0);
@@ -1157,17 +1186,20 @@
                     p: item.refPrincipal || '-'
                 }));
 
-                // Estrutura rígida de rotas conforme as Regras Globais (RULE 1)
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sheets', tabKey);
+                // Caminho simplificado ideal de acordo com a regra de segurança configurada
+                const docRef = doc(db, 'painel_etq', tabKey);
                 await setDoc(docRef, {
                     compressedData: compressed,
                     fileName: fileName,
                     updatedAt: new Date().toISOString()
                 });
                 console.log(`Document [${tabKey}] successfully saved to cloud.`);
+                updateSyncStatus('synced');
             } catch (error) {
                 console.error("Error trying to save to Cloud Firestore:", error);
-                showMessage("Erro ao sincronizar dados com a nuvem do banco de dados remoto.", "error");
+                updateSyncStatus('error');
+                // Exibe o erro exato para ajudar o administrador a diagnosticar
+                showMessage(`Erro de Sincronização. Detalhes: ${error.message || error.code || error}`, "error");
             } finally {
                 if (loader) loader.classList.add('hidden');
                 dropZone.classList.remove('opacity-50', 'pointer-events-none');
@@ -1181,15 +1213,17 @@
                 const user = await authenticate();
                 if (!user) return;
 
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sheets', tabKey);
+                const docRef = doc(db, 'painel_etq', tabKey);
                 await setDoc(docRef, {
                     compressedData: [],
                     fileName: null,
                     updatedAt: new Date().toISOString()
                 });
                 console.log(`Cleared [${tabKey}] database on cloud.`);
+                updateSyncStatus('synced');
             } catch (error) {
                 console.error("Error cleaning document on cloud:", error);
+                updateSyncStatus('error');
             } finally {
                 if (loader) loader.classList.add('hidden');
             }
@@ -1202,7 +1236,7 @@
 
                 const tabs = ['capa', 'acoesCapa', 'gmuds', 'acoesGmud'];
                 tabs.forEach(tab => {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sheets', tab);
+                    const docRef = doc(db, 'painel_etq', tab);
                     
                     // Escuta em tempo real garantindo atualização sincronizada instantaneamente para todos os usuários
                     onSnapshot(docRef, (docSnap) => {
@@ -1244,12 +1278,17 @@
                             }
                         }
                         updateTabsUI();
+                        updateSyncStatus('synced');
                     }, (error) => {
                         console.error(`Firebase Sync error on tab [${tab}]:`, error);
+                        if (error.code === 'permission-denied') {
+                            updateSyncStatus('error');
+                        }
                     });
                 });
             } catch (err) {
                 console.warn("Offline or authentication failure initializing Firestore Sync.", err);
+                updateSyncStatus('error');
             }
         }
 

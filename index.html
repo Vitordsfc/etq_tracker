@@ -37,7 +37,7 @@
             background: #94a3b8; 
         }
 
-        /* Regra Inteligente: Todos os ícones do sistema ganham o tom D40511, exceto os de Status e Excel */
+        /* Regra Inteligente: Ícones com tom D40511, exceto status semântico e excel */
         i:not(.fa-circle-exclamation):not(.fa-bell):not(.fa-triangle-exclamation):not(.fa-circle-check):not(.fa-circle-question):not(.fa-file-excel) {
             color: #D40511 !important;
         }
@@ -122,7 +122,7 @@
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
-        <!-- Área de Upload -->
+        <!-- Área de Upload de Arquivos -->
         <div id="uploadSection" class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 mb-8 transition-all duration-300">
             <div class="text-center">
                 <h2 id="uploadTitle" class="text-2xl font-bold text-slate-700 mb-2">Importar Folha de Cálculo de CAPAs</h2>
@@ -139,12 +139,12 @@
                 </div>
                 <div id="loadingIndicator" class="hidden mt-6">
                     <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-2"></i>
-                    <p class="text-slate-600 font-medium">Sincronizando dados com a nuvem e processando relatórios...</p>
+                    <p class="text-slate-600 font-medium">A processar dados e a sincronizar com a nuvem em tempo real...</p>
                 </div>
             </div>
         </div>
 
-        <!-- Seção do Dashboard -->
+        <!-- Seção do Dashboard principal -->
         <div id="dashboardSection" class="hidden opacity-0 transition-opacity duration-300">
             
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -168,6 +168,7 @@
                 </button>
             </div>
 
+            <!-- KPIs de Controle -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div onclick="clearAllFilters()" class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-[#FFCC00] cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all duration-200 group">
                     <p class="text-sm font-semibold text-slate-500 mb-1 group-hover:text-slate-900 transition-colors">Total Geral</p>
@@ -191,7 +192,6 @@
                 </div>
             </div>
 
-            <!-- Gráficos de Controle -->
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
                     <h3 class="text-lg font-bold text-slate-700 mb-4 text-center">Distribuição de Volume por Data Limite</h3>
@@ -208,7 +208,7 @@
                 </div>
             </div>
 
-            <!-- Tabela de Ocorrências -->
+            <!-- Tabela Principal de Detalhamento -->
             <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden mb-12">
                 <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
                     <div>
@@ -250,6 +250,7 @@
         </div>
     </main>
 
+    <!-- Botão Flutuante de Filtros -->
     <button id="floatingFilterBtn" onclick="toggleFilterDrawer(true)" class="hidden fixed bottom-6 right-6 z-30 bg-[#FFCC00] hover:bg-[#E6B800] text-slate-900 rounded-full p-4 shadow-xl hover:shadow-2xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 group">
         <span class="relative flex h-5 w-5 items-center justify-center">
             <i class="fa-solid fa-filter text-lg !text-slate-900"></i>
@@ -260,6 +261,7 @@
         </span>
     </button>
 
+    <!-- Drawer de Filtros Laterais -->
     <div id="filterDrawerBackdrop" onclick="toggleFilterDrawer(false)" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300"></div>
 
     <div id="filterDrawer" class="fixed top-0 right-0 h-full w-80 md:w-96 bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out border-l border-slate-200 flex flex-col">
@@ -330,13 +332,18 @@
     </div>
 
     <script>
-        // Meses traduzidos para conversão correta de datas textuais do Excel
         const ptMonths = {
             'jan': 0, 'fev': 1, 'mar': 2, 'abr': 3, 'mai': 4, 'jun': 5,
             'jul': 6, 'ago': 7, 'set': 8, 'out': 9, 'nov': 10, 'dez': 11
         };
 
-        // Estado Global de Dados Multibase
+        const dbConfigs = {
+            capa: { name: 'CAPAs', labelId: 'Número do CAPA / Local', desc: 'Carregue o seu ficheiro Excel ou CSV de CAPAs.' },
+            acoesCapa: { name: 'Ações de CAPA', labelId: 'Número da Ação / Local', desc: 'Carregue o seu ficheiro contendo as Ações das suas CAPAs.' },
+            gmuds: { name: 'GMUDs', labelId: 'Número da GMUD / Local', desc: 'Carregue o seu ficheiro de Gestão de Mudanças (GMUDs).' },
+            acoesGmud: { name: 'Ações de GMUD', labelId: 'Número da Ação / Local', desc: 'Carregue o seu ficheiro contendo as Ações associadas às GMUDs.' }
+        };
+
         let currentDb = 'capa'; 
         let databases = {
             capa: { name: 'CAPAs', data: [], fileName: null },
@@ -345,7 +352,6 @@
             acoesGmud: { name: 'Ações de GMUD', data: [], fileName: null }
         };
 
-        // Filtros Ativos
         let parsedData = []; 
         let charts = {};
         let activeFilters = {
@@ -356,7 +362,6 @@
             localizacao: []
         };
 
-        // Seleção de Elementos DOM
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
         const uploadSection = document.getElementById('uploadSection');
@@ -364,7 +369,6 @@
         const loadingIndicator = document.getElementById('loadingIndicator');
         const searchInput = document.getElementById('searchInput');
 
-        // Configurações de Drag and Drop
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, preventDefaults, false);
             document.body.addEventListener(eventName, preventDefaults, false);
@@ -402,13 +406,6 @@
             const thColId = document.getElementById('thColId');
             const thColRef = document.getElementById('thColRef');
 
-            const dbConfigs = {
-                capa: { name: 'CAPAs', labelId: 'Número do CAPA / Local', desc: 'Carregue o seu ficheiro Excel ou CSV de CAPAs.' },
-                acoesCapa: { name: 'Ações de CAPA', labelId: 'Número da Ação / Local', desc: 'Carregue o seu ficheiro contendo as Ações das suas CAPAs.' },
-                gmuds: { name: 'GMUDs', labelId: 'Número da GMUD / Local', desc: 'Carregue o seu ficheiro de Gestão de Mudanças (GMUDs).' },
-                acoesGmud: { name: 'Ações de GMUD', labelId: 'Número da Ação / Local', desc: 'Carregue o seu ficheiro contendo as Ações associadas às GMUDs.' }
-            };
-
             uploadTitle.innerText = `Importar Folha de Cálculo de ${dbConfigs[key].name}`;
             uploadDescription.innerHTML = dbConfigs[key].desc;
             if (thColId) thColId.innerText = dbConfigs[key].labelId;
@@ -435,7 +432,6 @@
                 document.getElementById('dashboardTitle').innerText = `Visão Geral - ${dbConfigs[key].name}`;
                 document.getElementById('dashboardSubtitle').innerHTML = `Ficheiro ativo: <span class="font-bold text-[#D40511]">${databases[key].fileName}</span>`;
                 
-                // Exibe o painel de forma suave
                 dashboardSection.classList.remove('opacity-0');
 
                 activeFilters = { vencimento: [], responsavel: [], status: [], fase: [], localizacao: [] };
@@ -445,7 +441,7 @@
                     if (el) el.value = '';
                 });
 
-                // Executa filtros e renderiza gráficos após o container estar visível
+                // Execução do render com pequeno delay para que o Chart.js calcule as dimensões do container
                 setTimeout(() => {
                     applyFilters(); 
                 }, 50);
@@ -513,7 +509,7 @@
             dropZone.classList.add('opacity-50', 'pointer-events-none');
 
             const reader = new FileReader();
-            reader.onload = async function (e) {
+            reader.onload = function (e) {
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array', cellDates: true });
@@ -521,29 +517,22 @@
                     const worksheet = workbook.Sheets[firstSheetName];
                     const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
 
-                    // Processa e exibe de imediato na interface (Otimista)
-                    processData(rawData, file.name, currentDb);
-
-                    // SALVA O ARQUIVO BINÁRIO REAL NO FIREBASE STORAGE
-                    if (typeof window.saveExcelToFirebase === "function") {
-                        await window.saveExcelToFirebase(currentDb, file);
-                    }
+                    processData(rawData, file.name);
                 } catch (error) {
                     console.error(error);
                     showMessage("Erro ao ler a folha de cálculo. Verifique se o ficheiro não está corrompido.", "error");
-                } finally {
                     loadingIndicator.classList.add('hidden');
                     dropZone.classList.remove('opacity-50', 'pointer-events-none');
-                    fileInput.value = '';
                 }
             };
             reader.readAsArrayBuffer(file);
         }
 
-        function processData(rawData, fileName, targetDbKey) {
-            const dbKey = targetDbKey || currentDb;
+        function processData(rawData, fileName) {
             if (!rawData || rawData.length === 0) {
                 showMessage("A folha de cálculo está vazia.", "warning");
+                loadingIndicator.classList.add('hidden');
+                dropZone.classList.remove('opacity-50', 'pointer-events-none');
                 return;
             }
 
@@ -588,7 +577,7 @@
             const colCapa = getColName(headers, ['numero', 'capa', 'codigo', 'gmud', 'mudança', 'id', 'solicitação', 'num', 'identificador', 'ação', 'acao']);
             
             let colAssunto;
-            if (dbKey === 'acoesGmud') {
+            if (currentDb === 'acoesGmud') {
                 colAssunto = getColName(headers, ['tema de actividade', 'tema de atividade', 'tema de acção', 'tema de acao', 'tema', 'assunto', 'atividade', 'titulo', 'descricao', 'texto', 'detalhe', 'resumo', 'nome', 'descrição']);
             } else {
                 colAssunto = getColName(headers, ['assunto', 'atividade', 'titulo', 'descricao', 'texto', 'detalhe', 'resumo', 'nome', 'descrição']);
@@ -605,6 +594,8 @@
             if (!colCapa && !colResp && !colVenc && !colFase) {
                 const colunasAchadas = headers.filter(h => h !== "").slice(0, 5).join(", ") + "...";
                 showMessage(`Não foi possível mapear as colunas corretas automaticamente. Encontrado na linha de cabeçalho: [${colunasAchadas}].`, "error");
+                loadingIndicator.classList.add('hidden');
+                dropZone.classList.remove('opacity-50', 'pointer-events-none');
                 return;
             }
 
@@ -678,9 +669,9 @@
                 let cleanResp = rawResp.split('(')[0].trim();
 
                 let refPrincipalVal = '-';
-                if (dbKey === 'acoesGmud' && colRefPrincipal) {
+                if (currentDb === 'acoesGmud' && colRefPrincipal) {
                     refPrincipalVal = row[colRefPrincipal] ? String(row[colRefPrincipal]).trim() : '-';
-                } else if (dbKey === 'acoesCapa' && colCapaPrincipal) {
+                } else if (currentDb === 'acoesCapa' && colCapaPrincipal) {
                     refPrincipalVal = row[colCapaPrincipal] ? String(row[colCapaPrincipal]).trim() : '-';
                 }
 
@@ -699,7 +690,6 @@
                 });
             }
 
-            // Filtragem de remoção de status fechados e inválidos
             tempParsed = tempParsed.filter(item => {
                 const isNotEmpty = (item.capa !== 'N/D' && item.capa !== 'undefined' && item.capa !== '') ||
                                    (item.responsavel !== 'Não Atribuído' && item.responsavel !== 'undefined' && item.responsavel !== '');
@@ -710,14 +700,14 @@
 
             if (tempParsed.length === 0) {
                 showMessage("Não foram detetados dados válidos compatíveis (ou todos os registos estão fechados).", "warning");
+                loadingIndicator.classList.add('hidden');
+                dropZone.classList.remove('opacity-50', 'pointer-events-none');
                 return;
             }
 
-            databases[dbKey].data = tempParsed;
-            databases[dbKey].fileName = fileName;
-
-            if (dbKey === currentDb) {
-                switchTab(currentDb);
+            // SALVA DIRETO NO FIREBASE CLOUD FIRESTORE COM SEGURANÇA E PARSE COMPACTADO
+            if (typeof window.saveDatabaseToFirebase === "function") {
+                window.saveDatabaseToFirebase(currentDb, tempParsed, fileName);
             }
         }
 
@@ -727,7 +717,6 @@
 
             const colors = { 'Vencido': '#ef4444', 'Crítico (< 7 dias)': '#f97316', 'Atenção (< 30 dias)': '#eab308', 'No Prazo (> 30 dias)': '#22c55e', 'Sem Data': '#94a3b8' };
 
-            // Gráfico 1 - Distribuição Temporal
             const dateGroups = {};
             data.forEach(d => {
                 const label = d.vencimentoFormatado;
@@ -748,7 +737,6 @@
                 onHover: (e, elements) => { e.native.target.style.cursor = elements[0] ? 'pointer' : 'default'; }
             });
 
-            // Gráfico 2 - Distribuição por Responsável e Status
             const respData = {};
             data.forEach(d => {
                 if (!respData[d.responsavel]) { respData[d.responsavel] = { 'Vencido': 0, 'Crítico (< 7 dias)': 0, 'Atenção (< 30 dias)': 0, 'No Prazo (> 30 dias)': 0, 'Sem Data': 0 }; }
@@ -993,21 +981,9 @@
         }
 
         function resetDashboard() {
-            const oldName = databases[currentDb].fileName;
-            databases[currentDb].data = []; 
-            databases[currentDb].fileName = null; 
-            parsedData = [];
-            clearAllFilters(); 
-            document.getElementById('floatingFilterBtn').classList.add('hidden');
-            
-            if (typeof window.deleteExcelFromFirebase === "function" && oldName) {
-                window.deleteExcelFromFirebase(currentDb);
+            if (typeof window.deleteDatabaseFromFirebase === "function") {
+                window.deleteDatabaseFromFirebase(currentDb);
             }
-            dashboardSection.classList.add('opacity-0');
-            setTimeout(() => { 
-                dashboardSection.classList.add('hidden'); 
-                switchTab(currentDb); 
-            }, 300);
         }
 
         function toggleFilterDrawer(open) {
@@ -1084,11 +1060,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyB0WY5jdkBayS2KvKV9BejwUd1dl0Hl_us",
             authDomain: "etq-tracker.firebaseapp.com",
@@ -1100,150 +1074,189 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const storage = getStorage(app);
         const auth = getAuth(app);
 
-        let authReadyPromise = null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        let currentUser = null;
+        let isSyncing = false;
 
-        // Garante o login anônimo de forma assíncrona antes de ler ou salvar
-        function ensureAuth() {
-            if (!authReadyPromise) {
-                authReadyPromise = new Promise((resolve, reject) => {
-                    signInAnonymously(auth)
-                        .then((userCredential) => {
-                            console.log("Autenticado anonimamente no Firebase. ID do Utilizador:", userCredential.user.uid);
-                            resolve(userCredential.user);
-                        })
-                        .catch((err) => {
-                            console.error("Falha ao inicializar a autenticação no Firebase:", err);
-                            reject(err);
-                        });
-                });
+        // Autenticação robusta para acesso ao Cloud Firestore
+        async function authenticate() {
+            if (currentUser) return currentUser;
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    const cred = await signInWithCustomToken(auth, __initial_auth_token);
+                    currentUser = cred.user;
+                } else {
+                    const cred = await signInAnonymously(auth);
+                    currentUser = cred.user;
+                }
+                console.log("Firebase Authenticated successfully:", currentUser.uid);
+                return currentUser;
+            } catch (error) {
+                console.error("Firebase Authentication error:", error);
+                throw error;
             }
-            return authReadyPromise;
         }
 
-        window.saveExcelToFirebase = async function(tabKey, file) {
+        // Algoritmo de descompressão rápida de estrutura de dados
+        function decompressData(compressedArray) {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            
+            return compressedArray.map(c => {
+                const dueDate = c.v ? new Date(c.v) : null;
+                let validDate = dueDate && !isNaN(dueDate.getTime());
+                let diasRestantes = null;
+                let statusGroup = 'Sem Data';
+                let statusColor = 'gray';
+
+                if (validDate) {
+                    const utcDueDate = Date.UTC(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+                    const utcToday = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+                    diasRestantes = Math.floor((utcDueDate - utcToday) / (1000 * 60 * 60 * 24));
+
+                    if (diasRestantes < 0) { statusGroup = 'Vencido'; statusColor = 'red'; }
+                    else if (diasRestantes <= 7) { statusGroup = 'Crítico (< 7 dias)'; statusColor = 'orange'; }
+                    else if (diasRestantes <= 30) { statusGroup = 'Atenção (< 30 dias)'; statusColor = 'yellow'; }
+                    else { statusGroup = 'No Prazo (> 30 dias)'; statusColor = 'green'; }
+                }
+
+                return {
+                    capa: c.c || 'N/D',
+                    assunto: c.a || '-',
+                    responsavel: c.r || 'Não Atribuído',
+                    fase: c.f || 'Desconhecida',
+                    vencimento: dueDate,
+                    vencimentoFormatado: validDate ? dueDate.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' }) : 'Sem Data Limite',
+                    diasRestantes: diasRestantes,
+                    statusGroup: statusGroup,
+                    statusColor: statusColor,
+                    localizacao: c.l || 'Não Informada',
+                    refPrincipal: c.p || '-'
+                };
+            });
+        }
+
+        window.saveDatabaseToFirebase = async function(tabKey, data, fileName) {
+            let loader = document.getElementById('loadingIndicator');
+            if (loader) loader.classList.remove('hidden');
+            
+            try {
+                const user = await authenticate();
+                if (!user) return;
+
+                // Converte em chaves minúsculas para comprimir e evitar o limite de 1MB do Firestore
+                const compressed = data.map(item => ({
+                    c: item.capa || '',
+                    a: item.assunto || '',
+                    r: item.responsavel || '',
+                    f: item.fase || '',
+                    v: item.vencimento ? item.vencimento.toISOString() : null,
+                    l: item.localizacao || '',
+                    p: item.refPrincipal || '-'
+                }));
+
+                // Estrutura rígida de rotas conforme as Regras Globais (RULE 1)
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sheets', tabKey);
+                await setDoc(docRef, {
+                    compressedData: compressed,
+                    fileName: fileName,
+                    updatedAt: new Date().toISOString()
+                });
+                console.log(`Document [${tabKey}] successfully saved to cloud.`);
+            } catch (error) {
+                console.error("Error trying to save to Cloud Firestore:", error);
+                showMessage("Erro ao sincronizar dados com a nuvem do banco de dados remoto.", "error");
+            } finally {
+                if (loader) loader.classList.add('hidden');
+                dropZone.classList.remove('opacity-50', 'pointer-events-none');
+            }
+        };
+
+        window.deleteDatabaseFromFirebase = async function(tabKey) {
             let loader = document.getElementById('loadingIndicator');
             if (loader) loader.classList.remove('hidden');
             try {
-                const user = await ensureAuth();
+                const user = await authenticate();
                 if (!user) return;
-                
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const fileExtension = file.name.split('.').pop();
-                const storagePath = `excel_files/${appId}/${tabKey}.${fileExtension}`;
-                
-                // 1. Enviar o arquivo binário direto ao Storage (Suporta arquivos grandes)
-                const storageRef = ref(storage, storagePath);
-                await uploadBytes(storageRef, file);
-                console.log("Ficheiro Excel enviado com sucesso para o Storage:", storagePath);
-                
-                // 2. Grava metadados mínimos de referência no Firestore
-                const docRef = doc(db, "artifacts", appId, "public", "data", tabKey);
+
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sheets', tabKey);
                 await setDoc(docRef, {
-                    fileName: file.name,
-                    fileExtension: fileExtension,
-                    storagePath: storagePath,
+                    compressedData: [],
+                    fileName: null,
                     updatedAt: new Date().toISOString()
                 });
-                console.log(`Metadados salvos no Firestore para [${tabKey}].`);
+                console.log(`Cleared [${tabKey}] database on cloud.`);
             } catch (error) {
-                console.error("Erro ao sincronizar arquivo com o Firebase:", error);
-                showMessage("Erro ao salvar o arquivo na nuvem. Verifique a ligação e tente novamente.", "error");
+                console.error("Error cleaning document on cloud:", error);
             } finally {
                 if (loader) loader.classList.add('hidden');
             }
         };
 
-        window.deleteExcelFromFirebase = async function(tabKey) {
+        async function setupRealtimeSync() {
             try {
-                const user = await ensureAuth();
+                const user = await authenticate();
                 if (!user) return;
-                
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const docRef = doc(db, "artifacts", appId, "public", "data", tabKey);
-                const docSnap = await getDoc(docRef);
-                
-                if (docSnap.exists()) {
-                    const metadata = docSnap.data();
-                    if (metadata.storagePath) {
-                        const storageRef = ref(storage, metadata.storagePath);
-                        await deleteObject(storageRef).catch(err => console.warn("Ficheiro no Storage já inexistente ou removido.", err));
-                    }
-                    await deleteDoc(docRef);
-                    console.log(`Dados e ficheiro de [${tabKey}] limpos com sucesso.`);
-                }
-            } catch (error) {
-                console.error("Erro ao tentar remover do Firebase:", error);
-            }
-        };
 
-        window.loadDatabaseFromFirebase = async function() {
-            const tabs = ['capa', 'acoesCapa', 'gmuds', 'acoesGmud'];
-            let loader = document.getElementById('loadingIndicator');
-            if (loader) {
-                loader.classList.remove('hidden');
-                const textEl = loader.querySelector('p');
-                if (textEl) textEl.innerText = "A descarregar as bases de dados ativas da nuvem...";
-            }
-
-            try {
-                const user = await ensureAuth();
-                if (!user) throw new Error("Utilizador não autenticado no Firebase");
-
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-                for (const tab of tabs) {
-                    try {
-                        const docRef = doc(db, "artifacts", appId, "public", "data", tab);
-                        const docSnap = await getDoc(docRef);
-                        
+                const tabs = ['capa', 'acoesCapa', 'gmuds', 'acoesGmud'];
+                tabs.forEach(tab => {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sheets', tab);
+                    
+                    // Escuta em tempo real garantindo atualização sincronizada instantaneamente para todos os usuários
+                    onSnapshot(docRef, (docSnap) => {
                         if (docSnap.exists()) {
-                            const metadata = docSnap.data();
-                            if (metadata.storagePath) {
-                                // 1. Buscar URL pública temporária para o binário do Storage
-                                const storageRef = ref(storage, metadata.storagePath);
-                                const downloadUrl = await getDownloadURL(storageRef);
-                                
-                                // 2. Efetuar o download do arquivo original como ArrayBuffer
-                                const response = await fetch(downloadUrl);
-                                const arrayBuffer = await response.arrayBuffer();
-                                
-                                // 3. Parsear binários na memória do cliente com XLSX.js (Evita gargalo de tráfego de rede)
-                                const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array', cellDates: true });
-                                const firstSheetName = workbook.SheetNames[0];
-                                const worksheet = workbook.Sheets[firstSheetName];
-                                const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+                            const res = docSnap.data();
+                            if (res.compressedData && res.compressedData.length > 0) {
+                                databases[tab].data = decompressData(res.compressedData);
+                                databases[tab].fileName = res.fileName;
+                            } else {
+                                databases[tab].data = [];
+                                databases[tab].fileName = null;
+                            }
+                        } else {
+                            databases[tab].data = [];
+                            databases[tab].fileName = null;
+                        }
 
-                                // Processa e monta a estrutura correspondente da aba
-                                processData(rawData, metadata.fileName, tab);
+                        // Atualiza a interface gráfica se for a aba ativa
+                        if (tab === currentDb) {
+                            parsedData = databases[currentDb].data;
+                            if (parsedData && parsedData.length > 0) {
+                                uploadSection.classList.add('hidden');
+                                dashboardSection.classList.remove('hidden');
+                                document.getElementById('floatingFilterBtn').classList.remove('hidden');
+                                document.getElementById('dashboardTitle').innerText = `Visão Geral - ${dbConfigs[currentDb].name}`;
+                                document.getElementById('dashboardSubtitle').innerHTML = `Ficheiro ativo: <span class="font-bold text-[#D40511]">${databases[currentDb].fileName}</span>`;
+                                
+                                dashboardSection.classList.remove('opacity-0');
+                                setTimeout(() => {
+                                    applyFilters();
+                                }, 50);
+                            } else {
+                                dashboardSection.classList.add('opacity-0');
+                                document.getElementById('floatingFilterBtn').classList.add('hidden');
+                                setTimeout(() => {
+                                    dashboardSection.classList.add('hidden');
+                                    uploadSection.classList.remove('hidden');
+                                }, 200);
                             }
                         }
-                    } catch (error) {
-                        console.error(`Falha ao recuperar registo binário da aba [${tab}]:`, error);
-                    }
-                }
-            } catch (e) {
-                console.warn("Modo offline ativo ou sincronização desabilitada temporariamente.", e);
-            } finally {
-                if (loader) {
-                    loader.classList.add('hidden');
-                    const textEl = loader.querySelector('p');
-                    if (textEl) textEl.innerText = "Sincronizando dados com a nuvem e processando relatórios...";
-                }
-                updateTabsUI();
-                
-                if (databases[currentDb].data && databases[currentDb].data.length > 0) {
-                    switchTab(currentDb);
-                }
+                        updateTabsUI();
+                    }, (error) => {
+                        console.error(`Firebase Sync error on tab [${tab}]:`, error);
+                    });
+                });
+            } catch (err) {
+                console.warn("Offline or authentication failure initializing Firestore Sync.", err);
             }
-        };
+        }
 
-        // Dispara o download automático no carregamento da janela
-        window.onload = function() {
-            window.loadDatabaseFromFirebase();
-        };
+        // Inicializador principal de escuta de rede
+        document.addEventListener("DOMContentLoaded", () => {
+            setupRealtimeSync();
+        });
     </script>
 </body>
 </html>

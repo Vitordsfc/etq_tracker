@@ -716,11 +716,15 @@
                                    (item.responsavel !== 'Não Atribuído' && item.responsavel !== 'undefined' && item.responsavel !== '');
                 const faseLower = item.fase.toLowerCase().trim();
                 const isNotClosed = faseLower !== 'closed' && faseLower !== 'closed without action' && faseLower !== 'completed' && faseLower !== 'voided';
-                return isNotEmpty && isNotClosed;
+                
+                // NOVO PRÉ-FILTRO: Ignorar localizações que contenham SMRU71058 (Case Insensitive)
+                const containsExcludedLoc = item.localizacao && item.localizacao.toUpperCase().includes('SMRU71058');
+                
+                return isNotEmpty && isNotClosed && !containsExcludedLoc;
             });
 
             if (tempParsed.length === 0) {
-                window.showMessage("Não foram detetados dados válidos compatíveis (ou todos os registos estão fechados).", "warning");
+                window.showMessage("Não foram detetados dados válidos compatíveis após a aplicação dos filtros automáticos.", "warning");
                 loadingIndicator.classList.add('hidden');
                 dropZone.classList.remove('opacity-50', 'pointer-events-none');
                 return;
@@ -1221,6 +1225,10 @@
                     localizacao: c.l || 'Não Informada',
                     refPrincipal: c.p || '-'
                 };
+            }).filter(item => {
+                // NOVO PRÉ-FILTRO: Adicionado para garantir exclusão também na descompressão do Firebase
+                const containsExcludedLoc = item.localizacao && item.localizacao.toUpperCase().includes('SMRU71058');
+                return !containsExcludedLoc;
             });
         }
 
